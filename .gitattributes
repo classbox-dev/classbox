@@ -1,0 +1,13 @@
+# Default behaviour: convert line endings to LF (Unix-style) on checkout.
+* text eol=lf
+
+# Explicit declarations of filetypes used in the project.
+*.go text eol=lf
+*.sql text eol=lf
+*.mod text eol=lf
+*.sum text eol=lf
+*.md text eol=lf
+
+# Binary files: should not be modified
+# (uncomment if necessary)
+# *.exe binary

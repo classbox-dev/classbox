@@ -1,0 +1,20 @@
+FROM mkznts/build-go:0.2 as build
+
+WORKDIR /build
+
+# Cache go modules
+ADD go.sum go.mod /build/
+RUN go mod download
+
+# Build [and lint] the thing
+ADD . /build
+# RUN golangci-lint run --out-format=tab --tests=false ./...
+RUN go build -o app github.com/mkuznets/classbox/cmd/classbox
+
+FROM mkznts/base-go
+
+COPY --from=build /build/app /srv/app
+
+EXPOSE 8080
+WORKDIR /srv
+CMD ["/srv/app", "server"]
