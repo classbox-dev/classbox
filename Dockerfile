@@ -9,7 +9,7 @@ RUN go mod download
 # Build [and lint] the thing
 ADD . /build
 # RUN golangci-lint run --out-format=tab --tests=false ./...
-RUN go build -o app github.com/mkuznets/classbox/cmd/classbox
+RUN go build -o app github.com/mkuznets/classbox/cmd/box
 
 FROM mkznts/base-go
 
@@ -17,4 +17,4 @@ COPY --from=build /build/app /srv/app
 
 EXPOSE 8080
 WORKDIR /srv
-CMD ["/srv/app", "server"]
+CMD ["/srv/app", "api"]

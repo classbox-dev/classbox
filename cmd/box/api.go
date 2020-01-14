@@ -5,13 +5,13 @@ import (
 	"log"
 )
 
-// ServerCommand with command line flags and env
-type ServerCommand struct {
+// APICommand with command line flags and env
+type APICommand struct {
 	DB DBOptions `group:"PostgreSQL settings" namespace:"db" env-namespace:"DB"`
 }
 
-// Execute is the entry point for "server" command, called by flag parser
-func (s *ServerCommand) Execute(args []string) error {
+// Execute is the entry point for "api" command, called by flag parser
+func (s *APICommand) Execute(args []string) error {
 	db, err := s.DB.GetPool()
 	if err != nil {
 		log.Fatalf("DB connection failed: %v", err)
@@ -29,9 +29,9 @@ func (s *ServerCommand) Execute(args []string) error {
 }
 
 func init() {
-	var runCommand ServerCommand
+	var runCommand APICommand
 	_, err := parser.AddCommand(
-		"server",
+		"api",
 		"start webserver",
 		"start webserver",
 		&runCommand)
