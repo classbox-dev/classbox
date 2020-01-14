@@ -28,11 +28,7 @@ services:
       - classbox-db:/var/lib/postgresql/data
       - ./sql:/sql
     environment:
-      PGUSER: postgres
-      PGDATABASE: postgres
-      PGPASSWORD:
-      PGHOST: 127.0.0.1
-      PGPORT: 5432
+      PGUSER: postgres  # override default user for `psql`
     networks:
       - default
 
