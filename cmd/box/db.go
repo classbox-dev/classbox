@@ -10,7 +10,7 @@ import (
 type DBOptions struct {
 	Host string `long:"host" env:"HOST" description:"hostname or IP" default:"127.0.0.1"`
 	Port uint32 `long:"port" env:"PORT" description:"port" default:"5432"`
-	User string `long:"user" env:"USER" description:"username"`
+	User string `long:"user" env:"USER" description:"username" default:"postgres"`
 	Pass string `long:"pass" env:"PASS" description:"password"`
 	Name string `long:"name" env:"NAME" description:"database name"`
 	Opts string `long:"options" env:"OPTS" description:"extra connection options" default:"sslmode=disable"`
