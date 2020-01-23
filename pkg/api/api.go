@@ -1,8 +1,8 @@
 package api
 
 import (
-	"fmt"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"golang.org/x/oauth2"
 	"log"
 	"net/http"
 	"time"
@@ -13,11 +13,13 @@ import (
 
 // API is a collection of endpoints
 type API struct {
-	DB *pgxpool.Pool
+	DB    *pgxpool.Pool
+	OAuth *oauth2.Config
 }
 
 // Server is a
 type Server struct {
+	Addr string
 	Port int
 	API  API
 }
@@ -26,19 +28,17 @@ type Server struct {
 func (s *Server) Start() {
 	router := chi.NewRouter()
 
-	fmt.Println()
-
 	// Set a timeout value on the request context (ctx), that will signal
 	// through ctx.Done() that the request has timed out and further
 	// processing should be stopped.
 	router.Use(middleware.Timeout(60 * time.Second))
 
-	router.Route("/api", func(r chi.Router) {
+	router.Route("/", func(r chi.Router) {
 		r.Get("/scoreboard", s.API.Scoreboard)
+		r.Get("/signup", s.API.Signup)
 	})
 
-	addr := fmt.Sprintf("0.0.0.0:%d", s.Port)
-	err := http.ListenAndServe(addr, router)
+	err := http.ListenAndServe(s.Addr, router)
 	if err != nil {
 		log.Printf("[WARN] server has terminated: %s", err)
 	}

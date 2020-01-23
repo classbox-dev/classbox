@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
+	"github.com/mkuznets/classbox/pkg/opts"
 	"log"
 )
 
 // ClientCommand with command line flags and env
 type ClientCommand struct {
-	DB DBOptions `group:"PostgreSQL settings" namespace:"db" env-namespace:"DB"`
+	DB opts.DB `group:"PostgreSQL settings" namespace:"db" env-namespace:"DB"`
 }
 
 // Execute is the entry point for "server" command, called by flag parser

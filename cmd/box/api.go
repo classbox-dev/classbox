@@ -2,12 +2,15 @@ package main
 
 import (
 	"github.com/mkuznets/classbox/pkg/api"
+	"github.com/mkuznets/classbox/pkg/opts"
 	"log"
 )
 
 // APICommand with command line flags and env
 type APICommand struct {
-	DB DBOptions `group:"PostgreSQL settings" namespace:"db" env-namespace:"DB"`
+	Addr   string      `long:"addr" env:"ADDR" description:"HTTP service address" default:"127.0.0.1:8080"`
+	DB     opts.DB     `group:"PostgreSQL" namespace:"db" env-namespace:"DB"`
+	Github opts.Github `group:"github" namespace:"github" env-namespace:"GITHUB"`
 }
 
 // Execute is the entry point for "api" command, called by flag parser
@@ -19,9 +22,10 @@ func (s *APICommand) Execute(args []string) error {
 	log.Print("[INFO] connected to DB")
 
 	server := api.Server{
-		Port: 8080,
+		Addr: s.Addr,
 		API: api.API{
-			DB: db,
+			DB:    db,
+			OAuth: s.Github.OAuth.Config(),
 		},
 	}
 	server.Start()
