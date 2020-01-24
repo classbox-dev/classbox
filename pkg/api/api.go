@@ -13,8 +13,9 @@ import (
 
 // API is a collection of endpoints
 type API struct {
-	DB    *pgxpool.Pool
-	OAuth *oauth2.Config
+	DB          *pgxpool.Pool
+	OAuth       *oauth2.Config
+	RandomState string
 }
 
 // Server is a

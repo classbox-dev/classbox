@@ -3,35 +3,23 @@ package api
 import (
 	"bytes"
 	"fmt"
-	"github.com/pkg/errors"
-	"math/rand"
-	"net/http"
-	"strings"
-	"time"
-
 	"github.com/go-chi/render"
 	E "github.com/mkuznets/classbox/pkg/api/errors"
+	"github.com/pkg/errors"
+	"net/http"
 )
 
 // Scoreboard returns scores of all students
 func (api *API) Signup(w http.ResponseWriter, r *http.Request) {
 
-	alphabet := []byte("abcdefghijklmnopqrstuvwxyz")
-	rand.Seed(time.Now().UnixNano())
-	var b strings.Builder
-	for i := 0; i < 32; i++ {
-		b.WriteByte(alphabet[rand.Intn(len(alphabet))])
-	}
-	state := b.String()
-
 	code := r.FormValue("code")
 	if code == "" {
-		url := api.OAuth.AuthCodeURL(state)
+		url := api.OAuth.AuthCodeURL(api.RandomState)
 		http.Redirect(w, r, url, http.StatusFound)
 		return
 	} else {
-		if state != r.FormValue("state") {
-			E.Render(w, r, E.Internal(errors.New("invalid state")))
+		if api.RandomState != r.FormValue("state") {
+			E.Render(w, r, E.Internal(fmt.Errorf("invalid state: %v vs %v", api.RandomState, r.FormValue("state"))))
 			return
 		}
 

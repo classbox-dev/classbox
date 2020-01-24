@@ -4,6 +4,9 @@ import (
 	"github.com/mkuznets/classbox/pkg/api"
 	"github.com/mkuznets/classbox/pkg/opts"
 	"log"
+	"math/rand"
+	"strings"
+	"time"
 )
 
 // APICommand with command line flags and env
@@ -21,11 +24,20 @@ func (s *APICommand) Execute(args []string) error {
 	}
 	log.Print("[INFO] connected to DB")
 
+	alphabet := []byte("abcdefghijklmnopqrstuvwxyz")
+	rand.Seed(time.Now().UnixNano())
+	var b strings.Builder
+	for i := 0; i < 32; i++ {
+		b.WriteByte(alphabet[rand.Intn(len(alphabet))])
+	}
+	state := b.String()
+
 	server := api.Server{
 		Addr: s.Addr,
 		API: api.API{
-			DB:    db,
-			OAuth: s.Github.OAuth.Config(),
+			DB:          db,
+			OAuth:       s.Github.OAuth.Config(),
+			RandomState: state,
 		},
 	}
 	server.Start()
