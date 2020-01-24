@@ -11,7 +11,7 @@ ADD . /build
 # RUN golangci-lint run --out-format=tab --tests=false ./...
 RUN go build -o app github.com/mkuznets/classbox/cmd/box
 
-FROM mkznts/base-go
+FROM mkznts/base-go:0.1
 
 COPY --from=build /build/app /srv/app
 
