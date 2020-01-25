@@ -30,6 +30,15 @@ func BadRequest(err error) render.Renderer {
 	}
 }
 
+func NotFound(err error) render.Renderer {
+	return &ErrResponse{
+		Err:        err,
+		StatusCode: http.StatusNotFound,
+		ErrorText:  "Not Found",
+		Details:    err.Error(),
+	}
+}
+
 // Internal responds with an internal server error
 func Internal(err error) render.Renderer {
 	return &ErrResponse{

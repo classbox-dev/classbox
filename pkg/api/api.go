@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/mkuznets/classbox/pkg/opts"
 	"golang.org/x/oauth2"
 	"log"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 type API struct {
 	DB          *pgxpool.Pool
 	OAuth       *oauth2.Config
+	App         *opts.App
 	RandomState string
 }
 
@@ -36,7 +38,11 @@ func (s *Server) Start() {
 
 	router.Route("/", func(r chi.Router) {
 		r.Get("/scoreboard", s.API.Scoreboard)
-		r.Get("/signup", s.API.Signup)
+		r.Route("/signup", func(r chi.Router) {
+			r.Get("/oauth", s.API.OAuthURL)
+			r.Post("/create", s.API.CreateUser)
+			r.Post("/install", s.API.InstallApp)
+		})
 	})
 
 	err := http.ListenAndServe(s.Addr, router)

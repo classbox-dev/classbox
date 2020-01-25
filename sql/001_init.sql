@@ -1,8 +1,13 @@
 DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE IF NOT EXISTS users
 (
-    id    bigserial PRIMARY KEY,
-    login text NOT NULL UNIQUE
+    id              bigserial PRIMARY KEY,
+    github_id       bigint NOT NULL UNIQUE,
+    login           text   NOT NULL,
+    email           text   NOT NULL,
+    repository_id   bigint NOT NULL,
+    repository_name text   NOT NULL,
+    installation_id bigint
 );
 
 -- -----------------------------------------------------------------------------

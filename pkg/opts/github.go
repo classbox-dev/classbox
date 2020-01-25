@@ -1,10 +1,19 @@
 package opts
 
-import "golang.org/x/oauth2"
+import (
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
+	"errors"
+	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/oauth2"
+	"time"
+)
 
 // Github contains settings for Github apps
 type Github struct {
-	OAuth OAuth `group:"Github OAuth" namespace:"oauth" env-namespace:"OAUTH"`
+	OAuth *OAuth `group:"Github OAuth" namespace:"oauth" env-namespace:"OAUTH"`
+	App   *App   `group:"Github App" namespace:"app" env-namespace:"APP"`
 }
 
 // OAuth contains settings of Github OAuth app
@@ -24,4 +33,45 @@ func (g *OAuth) Config() *oauth2.Config {
 			TokenURL: "https://github.com/login/oauth/access_token",
 		},
 	}
+}
+
+// App contains settings of (native) Github App
+type App struct {
+	ID         string `long:"id" env:"ID" description:"app id" required:"true"`
+	PrivateKey string `long:"private-key" env:"PRIVATE_KEY" description:"base64-encoded private key in pem format" required:"true"`
+}
+
+// Token returns JWT token from the configured app key
+func (app *App) Token() (*oauth2.Token, error) {
+
+	pemRaw, err := base64.StdEncoding.DecodeString(app.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	block, _ := pem.Decode(pemRaw)
+	if block == nil || block.Type != "RSA PRIVATE KEY" {
+		return nil, errors.New("failed to decode PEM block with private key")
+	}
+
+	pkey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		panic(err)
+	}
+
+	jwtEncoder := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"iat": time.Now().Unix(),
+		"exp": time.Now().Unix() + 10*60,
+		"iss": app.ID,
+	})
+
+	token, err := jwtEncoder.SignedString(pkey)
+	if err != nil {
+		panic(err)
+	}
+
+	return &oauth2.Token{
+		AccessToken: token,
+		TokenType:   "bearer",
+	}, nil
 }

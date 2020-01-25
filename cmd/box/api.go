@@ -37,6 +37,7 @@ func (s *APICommand) Execute(args []string) error {
 		API: api.API{
 			DB:          db,
 			OAuth:       s.Github.OAuth.Config(),
+			App:         s.Github.App,
 			RandomState: state,
 		},
 	}
