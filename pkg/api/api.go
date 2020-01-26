@@ -44,6 +44,9 @@ func (s *Server) Start() {
 			r.Post("/create", s.API.CreateUser)
 			r.Post("/install", s.API.InstallApp)
 		})
+		r.Route("/hooks", func(r chi.Router) {
+			r.Post("/submission", s.API.SubmissionHook)
+		})
 	})
 
 	err := http.ListenAndServe(s.Addr, router)

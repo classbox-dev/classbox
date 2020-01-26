@@ -57,10 +57,10 @@ CREATE INDEX commits__run_id ON baselines (run_id);
 DROP TABLE IF EXISTS commits CASCADE;
 CREATE TABLE IF NOT EXISTS commits
 (
-    id         bigserial PRIMARY KEY,
-    user_id    bigint REFERENCES users (id),
-    commit     text        NOT NULL,
-    created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+    id              bigserial PRIMARY KEY,
+    user_id         bigint REFERENCES users (id),
+    commit          text   NOT NULL,
+    check_run_id    bigint NOT NULL
 );
 CREATE INDEX commits__user_id ON commits (user_id);
 CREATE UNIQUE INDEX commits__user_commit ON commits (user_id, commit);
@@ -104,16 +104,14 @@ CREATE TYPE task_status_t AS ENUM (
 DROP TABLE IF EXISTS tasks CASCADE;
 CREATE TABLE IF NOT EXISTS tasks
 (
-    id          bigserial PRIMARY KEY,
-    enqueued_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id          uuid PRIMARY KEY               DEFAULT uuid_generate_v4(),
+    enqueued_at timestamptz NOT NULL           DEFAULT CURRENT_TIMESTAMP,
     started_at  timestamptz,
-    ended_at    timestamptz,
-    topic       text        NOT NULL,
-    payload     jsonb       NOT NULL,
-    status      task_status_t        DEFAULT 'enqueued'
+    finished_at timestamptz,
+    commit_id   bigint REFERENCES commits (id) DEFAULT NULL,
+    status      task_status_t                  DEFAULT 'enqueued'
 );
-CREATE INDEX "tasks__enqueued_idx"
-    ON tasks (topic, status) WHERE status = 'enqueued';
+CREATE INDEX "tasks__enqueued_idx" ON tasks (status) WHERE status = 'enqueued';
 
 -- -----------------------------------------------------------------------------
 

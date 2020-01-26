@@ -173,11 +173,20 @@ func (c *Client) Uninstall(ctx context.Context, instID int) error {
 	return nil
 }
 
-func (c *Client) AppToken(ctx context.Context, instID int) error {
+func (c *Client) AuthAsInstallation(ctx context.Context, instID int) error {
 	path := fmt.Sprintf("/app/installations/%d/access_tokens", instID)
-	_, err := c.Request(ctx, "POST", path, nil, "application/vnd.github.gambit-preview+json")
+	data, err := c.Request(ctx, "POST", path, nil, "application/vnd.github.machine-man-preview+json")
 	if err != nil {
 		return err
+	}
+	accessToken := AccessToken{}
+	err = json.Unmarshal(data, &accessToken)
+	if err != nil {
+		return errors.Wrap(err, "could not decode response")
+	}
+	c.token = &oauth2.Token{
+		AccessToken: accessToken.Token,
+		TokenType:   "token",
 	}
 	return nil
 }
@@ -215,4 +224,23 @@ func (c *Client) CreateRepoFromTemplate(ctx context.Context, src, dst string, is
 	}
 
 	return &repo, nil
+}
+
+func (c *Client) CreateCheckRun(ctx context.Context, login, repo, commit string) (*CheckRun, error) {
+	path := fmt.Sprintf("/repos/%s/%s/check-runs", login, repo)
+
+	jsonStr := []byte(fmt.Sprintf(`{"name":"hsecode","head_sha":"%s"}`, commit))
+	data, err := c.Request(
+		ctx, "POST", path, jsonStr,
+		"application/vnd.github.antiope-preview+json")
+	if err != nil {
+		return nil, err
+	}
+
+	checkRun := CheckRun{}
+	err = json.Unmarshal(data, &checkRun)
+	if err != nil {
+		return &checkRun, errors.Wrap(err, "could not decode response")
+	}
+	return &checkRun, nil
 }
