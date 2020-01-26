@@ -17,6 +17,7 @@ type API struct {
 	DB          *pgxpool.Pool
 	OAuth       *oauth2.Config
 	App         *opts.App
+	AWS         *opts.AWS
 	RandomState string
 }
 
