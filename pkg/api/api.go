@@ -47,6 +47,9 @@ func (s *Server) Start() {
 		r.Route("/hooks", func(r chi.Router) {
 			r.Post("/submission", s.API.SubmissionHook)
 		})
+		r.Route("/commits", func(r chi.Router) {
+			r.Get("/{login}/{commitHash:[0-9a-z]+}", s.API.Commit)
+		})
 	})
 
 	err := http.ListenAndServe(s.Addr, router)

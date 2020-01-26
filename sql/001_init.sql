@@ -57,10 +57,10 @@ CREATE INDEX commits__run_id ON baselines (run_id);
 DROP TABLE IF EXISTS commits CASCADE;
 CREATE TABLE IF NOT EXISTS commits
 (
-    id              bigserial PRIMARY KEY,
-    user_id         bigint REFERENCES users (id),
-    commit          text   NOT NULL,
-    check_run_id    bigint NOT NULL
+    id           bigserial PRIMARY KEY,
+    user_id      bigint REFERENCES users (id),
+    commit       text   NOT NULL,
+    check_run_id bigint NOT NULL
 );
 CREATE INDEX commits__user_id ON commits (user_id);
 CREATE UNIQUE INDEX commits__user_commit ON commits (user_id, commit);
@@ -78,7 +78,6 @@ DROP TABLE IF EXISTS checks CASCADE;
 CREATE TABLE IF NOT EXISTS checks
 (
     id        bigserial PRIMARY KEY,
-    user_id   bigint REFERENCES users (id),
     commit_id bigint REFERENCES commits (id),
     test_id   bigint REFERENCES tests (id) DEFAULT NULL,
     name      text           NOT NULL,
@@ -86,10 +85,8 @@ CREATE TABLE IF NOT EXISTS checks
     output    text           NOT NULL,
     is_cached boolean                      DEFAULT FALSE
 );
-CREATE INDEX checks__user_id ON checks (user_id);
 CREATE INDEX checks__commit_id ON checks (commit_id);
 CREATE INDEX checks__test_id ON checks (test_id);
-CREATE UNIQUE INDEX checks__user_commit ON checks (user_id, commit_id);
 
 -- -----------------------------------------------------------------------------
 
@@ -108,7 +105,7 @@ CREATE TABLE IF NOT EXISTS tasks
     enqueued_at timestamptz NOT NULL           DEFAULT CURRENT_TIMESTAMP,
     started_at  timestamptz,
     finished_at timestamptz,
-    commit_id   bigint REFERENCES commits (id) DEFAULT NULL,
+    commit_id   bigint REFERENCES commits (id) DEFAULT NULL UNIQUE,
     status      task_status_t                  DEFAULT 'enqueued'
 );
 CREATE INDEX "tasks__enqueued_idx" ON tasks (status) WHERE status = 'enqueued';
