@@ -29,7 +29,7 @@ services:
       - db
 
   db:
-    image: mkznts/base-postgres:0.1
+    image: mkznts/base-postgres:0.2
     container_name: "classbox-db"
     ports:
       - "5432:5432"
