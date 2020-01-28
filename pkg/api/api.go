@@ -50,6 +50,9 @@ func (s *Server) Start() {
 		r.Route("/commits", func(r chi.Router) {
 			r.Get("/{login}/{commitHash:[0-9a-z]+}", s.API.Commit)
 		})
+		r.Route("/queue", func(r chi.Router) {
+			r.Post("/pop", s.API.Pop)
+		})
 	})
 
 	err := http.ListenAndServe(s.Addr, router)

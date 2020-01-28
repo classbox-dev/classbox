@@ -15,6 +15,10 @@ type S3 struct {
 	bucket  string
 }
 
+func New(session *session.Session, bucket string) *S3 {
+	return &S3{session, bucket}
+}
+
 func (s *S3) Upload(ctx context.Context, key string, body io.Reader) error {
 	uploader := s3manager.NewUploader(s.session)
 	_, err := uploader.UploadWithContext(ctx, &s3manager.UploadInput{

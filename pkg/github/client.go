@@ -244,3 +244,12 @@ func (c *Client) CreateCheckRun(ctx context.Context, login, repo, commit string)
 	}
 	return &checkRun, nil
 }
+
+func (c *Client) Archive(ctx context.Context, login, repo, commit string) ([]byte, error) {
+	path := fmt.Sprintf("/repos/%s/%s/zipball/%s", login, repo, commit)
+	data, err := c.Request(ctx, "GET", path, nil, "")
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
