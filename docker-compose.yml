@@ -60,6 +60,18 @@ services:
     networks:
       - default
 
+  docs:
+    image: nginx:1.17.8
+    container_name: "classbox-docs"
+    volumes:
+      - classbox-docs:/usr/share/nginx/html
+    ports:
+      - "8081:80"
+    expose:
+      - "8081"
+    networks:
+      - web
+
 networks:
   web:
     external: true
@@ -68,4 +80,6 @@ volumes:
   classbox-db:
     external: true
   classbox-artifacts:
+    external: true
+  classbox-docs:
     external: true
