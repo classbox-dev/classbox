@@ -27,6 +27,25 @@ services:
       - AWS_S3_BUCKET
     depends_on:
       - db
+    command: ["/srv/app", "api"]
+
+  client:
+    build: .
+    image: classbox:latest
+    container_name: "classbox-client"
+    restart: always
+    networks:
+      - default
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - API_URL
+    depends_on:
+      - api
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - classbox-artifacts:/srv/data
+    entrypoint: "/init-root.sh"
+    command: ["/srv/app", "client"]
 
   db:
     image: mkznts/base-postgres:0.2
@@ -47,4 +66,6 @@ networks:
 
 volumes:
   classbox-db:
+    external: true
+  classbox-artifacts:
     external: true

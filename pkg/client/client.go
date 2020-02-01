@@ -8,6 +8,9 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 )
 
 func New(ctx context.Context, url string) *Worker {
@@ -57,11 +60,26 @@ func (w *Worker) getTask() (*taskData, error) {
 
 func (w *Worker) do() {
 
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		panic(err)
+	}
+
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{})
+	if err != nil {
+		panic(err)
+	}
+
+	for _, container := range containers {
+		fmt.Printf("%s %s\n", container.ID[:10], container.Image)
+	}
+
 	for {
 		time.Sleep(3 * time.Second)
 		task, err := w.getTask()
 		if err != nil {
 			log.Printf("[ERR] %v", err)
+			continue
 		}
 
 		fmt.Println(task)

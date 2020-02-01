@@ -15,6 +15,9 @@ FROM mkznts/base-go:0.1
 
 COPY --from=build /build/app /srv/app
 
+# client requires root to control Docker
+COPY misc/init-root.sh /init-root.sh
+RUN chmod +x /init-root.sh
+
 EXPOSE 8080
 WORKDIR /srv
-CMD ["/srv/app", "api"]
