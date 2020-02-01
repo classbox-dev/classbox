@@ -2,25 +2,18 @@ package main
 
 import (
 	"context"
-	"github.com/mkuznets/classbox/pkg/opts"
-	"log"
+	"github.com/mkuznets/classbox/pkg/client"
 )
 
 // ClientCommand with command line flags and env
 type ClientCommand struct {
-	DB opts.DB `group:"PostgreSQL settings" namespace:"db" env-namespace:"DB"`
+	ApiURL string `long:"api-url" env:"API_URL" description:"base API URL" required:"true"`
 }
 
 // Execute is the entry point for "server" command, called by flag parser
 func (s *ClientCommand) Execute(args []string) error {
-	db, err := s.DB.GetPool()
-	if err != nil {
-		log.Fatalf("DB connection failed: %v", err)
-	}
-	log.Print("[INFO] connected to DB")
-
 	ctx := context.Background()
-	New(ctx, "submission", db)
+	client.New(ctx, s.ApiURL)
 	<-ctx.Done()
 	return nil
 }
