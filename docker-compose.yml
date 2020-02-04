@@ -43,7 +43,7 @@ services:
       - api
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - classbox-artifacts:/srv/data
+      - classbox-data:/srv/data
     entrypoint: "/init-root.sh"
     command: ["/srv/app", "client"]
 
@@ -79,7 +79,7 @@ networks:
 volumes:
   classbox-db:
     external: true
-  classbox-artifacts:
-    external: true
   classbox-docs:
+    external: true
+  classbox-data:
     external: true

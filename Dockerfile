@@ -1,5 +1,4 @@
 FROM mkznts/build-go:0.2 as build
-
 WORKDIR /build
 
 # Cache go modules
@@ -12,6 +11,7 @@ ADD . /build
 RUN go build -o app github.com/mkuznets/classbox/cmd/box
 
 FROM mkznts/base-go:0.1
+RUN apk add --no-cache --update docker-cli
 
 COPY --from=build /build/app /srv/app
 

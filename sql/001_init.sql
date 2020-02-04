@@ -16,9 +16,10 @@ DROP TABLE IF EXISTS tests CASCADE;
 CREATE TABLE IF NOT EXISTS tests
 (
     id          bigserial PRIMARY KEY,
-    name        text NOT NULL UNIQUE,
-    description text NOT NULL,
-    topic       text NOT NULL,
+    name        text   NOT NULL UNIQUE,
+    description text   NOT NULL,
+    topic       text   NOT NULL,
+    score       bigint NOT NULL,
     is_deleted  boolean DEFAULT FALSE
 );
 
@@ -33,24 +34,14 @@ CREATE TYPE run_status_t AS ENUM (
 DROP TABLE IF EXISTS runs CASCADE;
 CREATE TABLE IF NOT EXISTS runs
 (
-    id     bigserial PRIMARY KEY,
-    "hash" text         NOT NULL UNIQUE,
-    status run_status_t NOT NULL,
-    output text         NOT NULL,
-    score  bigint       NOT NULL
+    id          bigserial PRIMARY KEY,
+    "hash"      text         NOT NULL UNIQUE,
+    status      run_status_t NOT NULL,
+    output      text         NOT NULL,
+    score       bigint       NOT NULL,
+    test_id     bigint REFERENCES tests (id) DEFAULT NULL,
+    is_baseline boolean                      DEFAULT FALSE
 );
-
--- -----------------------------------------------------------------------------
-
-DROP TABLE IF EXISTS baselines CASCADE;
-CREATE TABLE IF NOT EXISTS baselines
-(
-    id      bigserial PRIMARY KEY,
-    test_id bigint REFERENCES tests (id) DEFAULT NULL,
-    run_id  bigint REFERENCES runs (id)  DEFAULT NULL
-);
-CREATE INDEX commits__test_id ON baselines (test_id);
-CREATE INDEX commits__run_id ON baselines (run_id);
 
 -- -----------------------------------------------------------------------------
 
@@ -60,7 +51,8 @@ CREATE TABLE IF NOT EXISTS commits
     id           bigserial PRIMARY KEY,
     user_id      bigint REFERENCES users (id),
     commit       text   NOT NULL,
-    check_run_id bigint NOT NULL
+    check_run_id bigint NOT NULL,
+    is_checked   boolean DEFAULT FALSE
 );
 CREATE INDEX commits__user_id ON commits (user_id);
 CREATE UNIQUE INDEX commits__user_commit ON commits (user_id, commit);
@@ -82,11 +74,10 @@ CREATE TABLE IF NOT EXISTS checks
     test_id   bigint REFERENCES tests (id) DEFAULT NULL,
     name      text           NOT NULL,
     status    check_status_t NOT NULL,
-    output    text           NOT NULL,
-    is_cached boolean                      DEFAULT FALSE
+    output    text           NOT NULL
 );
 CREATE INDEX checks__commit_id ON checks (commit_id);
-CREATE INDEX checks__test_id ON checks (test_id);
+CREATE INDEX checks__test_id ON checks (test_id) WHERE test_id IS NOT NULL;
 
 -- -----------------------------------------------------------------------------
 
@@ -94,8 +85,7 @@ DROP TYPE IF EXISTS task_status_t CASCADE;
 CREATE TYPE task_status_t AS ENUM (
     'enqueued',
     'executing',
-    'success',
-    'failure'
+    'finished'
     );
 
 DROP TABLE IF EXISTS tasks CASCADE;
