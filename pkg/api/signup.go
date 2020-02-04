@@ -1,11 +1,12 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/go-chi/render"
+	"github.com/jackc/pgx/v4"
 	E "github.com/mkuznets/classbox/pkg/api/errors"
+	"github.com/mkuznets/classbox/pkg/db"
 	"github.com/mkuznets/classbox/pkg/github"
 	"github.com/pkg/errors"
 	"log"
@@ -39,7 +40,7 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	token, err := api.OAuth.Exchange(r.Context(), data.Code)
 	if err != nil {
-		E.Render(w, r, E.Internal(errors.Wrap(err, "could not get token")))
+		E.Handle(w, r, errors.Wrap(err, "could not get token"))
 		return
 	}
 
@@ -47,7 +48,7 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := gh.User(r.Context())
 	if err != nil {
-		E.Render(w, r, E.Internal(errors.Wrap(err, "user request error")))
+		E.Handle(w, r, errors.Wrap(err, "user request error"))
 		return
 	}
 
@@ -56,24 +57,17 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 		if e, ok := err.(*github.ErrorResponse); ok && e.NotFound() {
 			repo, err = gh.CreateRepoFromTemplate(r.Context(), "mkuznets/stdlib-template", repoName, true)
 			if err != nil {
-				E.Render(w, r, E.Internal(errors.Wrap(err, "could not create a repooo")))
+				E.Handle(w, r, errors.Wrap(err, "could not create a repo"))
 				return
 			}
 		} else {
-			E.Render(w, r, E.Internal(errors.Wrap(err, "repo request error")))
+			E.Handle(w, r, errors.Wrap(err, "repo request error"))
 			return
 		}
 	}
 
-	tx, err := api.DB.Begin(r.Context())
-	if err != nil {
-		E.Render(w, r, E.Internal(errors.Wrap(err, "could not start transaction")))
-		return
-	}
-	//noinspection GoUnhandledErrorResult
-	defer tx.Rollback(r.Context())
-
-	_, err = tx.Exec(r.Context(), `
+	err = db.Tx(r.Context(), api.DB, func(tx pgx.Tx) error {
+		_, err = tx.Exec(r.Context(), `
 		INSERT INTO users ("github_id", "login", "email", "repository_id", "repository_name")
 		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT ("github_id") DO UPDATE
@@ -82,15 +76,14 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 			repository_id=EXCLUDED.repository_id,
 			repository_name=EXCLUDED.repository_name,
 			login=EXCLUDED.login
-		;
-	`, user.ID, user.Login, user.Email, repo.ID, repo.Name)
+		`, user.ID, user.Login, user.Email, repo.ID, repo.Name)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		return nil
+	})
 	if err != nil {
-		E.Render(w, r, E.Internal(errors.Wrap(err, "query error")))
-		return
-	}
-	err = tx.Commit(r.Context())
-	if err != nil {
-		E.Render(w, r, E.Internal(errors.Wrap(err, "could not commit transaction")))
+		E.Handle(w, r, err)
 		return
 	}
 
@@ -101,7 +94,7 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	appToken, err := api.App.Token()
 	if err != nil {
-		E.Render(w, r, E.Internal(errors.Wrap(err, "could not get app token")))
+		E.Handle(w, r, errors.Wrap(err, "could not get app token"))
 		return
 	}
 	app := github.New(appToken)
@@ -116,7 +109,7 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 	url := fmt.Sprintf("https://github.com/apps/hsecode/installations/new/permissions"+
 		"?suggested_target_id=%d&repository_ids[]=%d&state=%s", user.ID, repo.ID, api.RandomState)
 
-	render.JSON(w, r, map[string]string{"url": url})
+	render.JSON(w, r, render.M{"url": url})
 }
 
 type appData struct {
@@ -127,20 +120,19 @@ type appData struct {
 func (api *API) InstallApp(w http.ResponseWriter, r *http.Request) {
 
 	data := appData{}
-	err := json.NewDecoder(r.Body).Decode(&data)
-	if err != nil {
-		E.Render(w, r, E.BadRequest(errors.Wrap(err, "invalid input")))
+	if err := render.DecodeJSON(r.Body, &data); err != nil {
+		E.SendError(w, r, nil, http.StatusBadRequest, "invalid input")
 		return
 	}
 
 	if api.RandomState != data.State {
-		E.Render(w, r, E.BadRequest(fmt.Errorf("invalid state")))
+		E.SendError(w, r, nil, http.StatusBadRequest, "invalid state")
 		return
 	}
 
 	appToken, err := api.App.Token()
 	if err != nil {
-		E.Render(w, r, E.Internal(errors.Wrap(err, "could not get app token")))
+		E.Handle(w, r, errors.Wrap(err, "could not get app token"))
 		return
 	}
 	app := github.New(appToken)
@@ -154,35 +146,29 @@ func (api *API) InstallApp(w http.ResponseWriter, r *http.Request) {
 	var login, repoName string
 	err = api.DB.QueryRow(r.Context(), `SELECT "login", "repository_name" FROM "users" WHERE "github_id"=$1`, inst.Account.ID).Scan(&login, &repoName)
 	switch {
-	case err == sql.ErrNoRows:
-		E.Render(w, r, E.BadRequest(errors.Wrapf(err, "user not found: %s (id=%d)", inst.Account.Login, inst.Account.ID)))
+	case err == pgx.ErrNoRows:
+		e := fmt.Errorf("user not found: %s (id=%d)", inst.Account.Login, inst.Account.ID)
+		E.SendError(w, r, e, http.StatusBadRequest, e.Error())
 		return
 	case err != nil:
-		E.Render(w, r, E.Internal(errors.Wrap(err, "query error")))
+		E.Handle(w, r, err)
 		return
 	}
 
-	tx, err := api.DB.Begin(r.Context())
-	if err != nil {
-		E.Render(w, r, E.Internal(errors.Wrap(err, "could not start transaction")))
-		return
-	}
-	//noinspection GoUnhandledErrorResult
-	defer tx.Rollback(r.Context())
-
-	_, err = tx.Exec(r.Context(), `
+	err = db.Tx(r.Context(), api.DB, func(tx pgx.Tx) error {
+		_, err = tx.Exec(r.Context(), `
 		UPDATE "users" SET "installation_id"=$1 WHERE "github_id"=$2
-		;
-	`, inst.ID, inst.Account.ID)
+		`, inst.ID, inst.Account.ID)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		return nil
+	})
+
 	if err != nil {
-		E.Render(w, r, E.Internal(errors.Wrap(err, "query error")))
-		return
-	}
-	err = tx.Commit(r.Context())
-	if err != nil {
-		E.Render(w, r, E.Internal(errors.Wrap(err, "could not commit transaction")))
+		E.Handle(w, r, err)
 		return
 	}
 
-	render.JSON(w, r, map[string]string{"repo": fmt.Sprintf("%s/%s", login, repoName)})
+	render.JSON(w, r, render.M{"repo": fmt.Sprintf("%s/%s", login, repoName)})
 }

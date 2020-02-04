@@ -44,15 +44,18 @@ func (s *Server) Start() {
 			r.Post("/create", s.API.CreateUser)
 			r.Post("/install", s.API.InstallApp)
 		})
-		r.Route("/hooks", func(r chi.Router) {
-			r.Post("/submission", s.API.SubmissionHook)
-		})
 		r.Route("/commits", func(r chi.Router) {
-			r.Get("/{login}/{commitHash:[0-9a-z]+}", s.API.Commit)
+			r.Get("/{login}:{commitHash:[0-9a-z]+}", s.API.GetCommit)
 		})
-		r.Route("/queue", func(r chi.Router) {
-			r.Post("/pop", s.API.Pop)
+		r.Route("/tasks", func(r chi.Router) {
+			r.Post("/{taskID:[0-9a-z-]+}", s.API.FinishTask)
+			r.Post("/dequeue", s.API.DequeueTask)
+			r.Post("/enqueue", s.API.EnqueueTask)
 		})
+		r.Get("/runs", s.API.GetRuns)
+		r.Put("/runs", s.API.CreateRuns)
+		r.Get("/meta", s.API.GetMeta)
+		r.Put("/meta", s.API.UpdateMeta)
 	})
 
 	err := http.ListenAndServe(s.Addr, router)
