@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/mkuznets/classbox/pkg/docker"
 	"github.com/mkuznets/classbox/pkg/fileutils"
-	"github.com/mkuznets/classbox/pkg/opts"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -37,7 +36,6 @@ type Runner struct {
 	Ctx     context.Context
 	Http    *http.Client
 	ApiURL  string
-	Volumes map[string]opts.Volume
 }
 
 func (rr *Runner) task() (*Task, error) {
