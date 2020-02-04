@@ -14,6 +14,10 @@ type Stage struct {
 	Output string `json:"output,omitempty"`
 }
 
+func (s *Stage) Success() bool {
+	return s.Status == "success"
+}
+
 type Commit struct {
 	Login  string   `json:"login"`
 	Repo   string   `json:"repository"`
@@ -25,16 +29,18 @@ type Commit struct {
 type Run struct {
 	Hash     string `json:"hash"`
 	Status   string `json:"status"`
-	Output   string `json:"output,omitempty"`
+	Output   string `json:"output"`
 	Score    uint64 `json:"score"`
 	Test     string `json:"test"`
 	Baseline bool   `json:"baseline"`
 }
 
 type Task struct {
-	Id      string `json:"id"`
-	Ref     string `json:"ref"`
-	Archive string `json:"archive"`
+	Id     string `json:"id"`
+	Ref    string `json:"ref"`
+	Url    string `json:"archive"`
+	Stages []*Stage
+	Runs   []*Run
 }
 
 type UserStat struct {

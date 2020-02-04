@@ -92,19 +92,23 @@ func (c *Client) FinishTask(ctx context.Context, taskId string, stages []*models
 	return nil
 }
 
-func (c *Client) GetRuns(ctx context.Context, hashes []string, isBaseline bool) ([]*models.Run, error) {
+func (c *Client) GetRuns(ctx context.Context, hashes []string) (map[string]*models.Run, error) {
 	vs := url.Values{}
 	for _, h := range hashes {
 		vs.Add("hash", h)
 	}
-	vs.Add("baseline", fmt.Sprintf("%v", isBaseline))
 	path := fmt.Sprintf("/runs?%s", vs.Encode())
 
 	var runs []*models.Run
 	if err := c.request(ctx, "GET", path, nil, &runs); err != nil {
 		return nil, err
 	}
-	return runs, nil
+
+	m := map[string]*models.Run{}
+	for _, r := range runs {
+		m[r.Hash] = r
+	}
+	return m, nil
 }
 
 func (c *Client) SubmitRuns(ctx context.Context, runs []*models.Run) error {

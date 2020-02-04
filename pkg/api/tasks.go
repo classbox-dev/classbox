@@ -174,9 +174,9 @@ func (api *API) DequeueTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.JSON(w, r, &models.Task{
-		Id:      taskID,
-		Ref:     fmt.Sprintf("%s:%s", login, commitHash[:8]),
-		Archive: archiveURL,
+		Id:  taskID,
+		Ref: fmt.Sprintf("%s:%s", login, commitHash[:8]),
+		Url: archiveURL,
 	})
 }
 

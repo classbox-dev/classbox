@@ -11,22 +11,11 @@ import (
 	"github.com/mkuznets/classbox/pkg/db"
 	"github.com/pkg/errors"
 	"net/http"
-	"strconv"
 )
 
 func (api *API) GetRuns(w http.ResponseWriter, r *http.Request) {
 
 	q := r.URL.Query()
-
-	baselineQ := ""
-	if q.Get("baseline") != "" {
-		if t, err := strconv.ParseBool(q.Get("baseline")); err == nil {
-			baselineQ = fmt.Sprintf("AND r.is_baseline=%v", t)
-		} else {
-			E.SendError(w, r, nil, http.StatusBadRequest, "`baseline` has to be true or false")
-			return
-		}
-	}
 
 	hashes := &pgtype.TextArray{}
 	_ = hashes.Set(q["hash"])
@@ -34,8 +23,8 @@ func (api *API) GetRuns(w http.ResponseWriter, r *http.Request) {
 	sql := fmt.Sprintf(`
 	SELECT r.hash, r.status, r.output, r.score, t.name, r.is_baseline
 	FROM runs as r JOIN tests as t ON (t.id=r.test_id)
-	WHERE r.hash=ANY($1) %s
-	;`, baselineQ)
+	WHERE r.hash=ANY($1)
+	`)
 
 	rows, err := api.DB.Query(r.Context(), sql, hashes)
 	if err != nil {
