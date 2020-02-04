@@ -21,7 +21,7 @@ func (api *API) GetRuns(w http.ResponseWriter, r *http.Request) {
 	sql := fmt.Sprintf(`
 	SELECT r.hash, r.status, r.output, r.score, t.name, r.is_baseline
 	FROM runs as r JOIN tests as t ON (t.id=r.test_id)
-	WHERE r.hash=ANY($1)
+	WHERE r.hash=ANY($1) AND t.is_deleted='f'
 	`)
 
 	rows, err := api.DB.Query(r.Context(), sql, hashes)
@@ -65,9 +65,9 @@ func (api *API) CreateRuns(w http.ResponseWriter, r *http.Request) {
 
 	err = db.Tx(r.Context(), api.DB, func(tx pgx.Tx) error {
 		for _, run := range runs {
-			var testID *uint64
-			if v, ok := testIds[run.Test]; ok {
-				testID = &v
+			testID, ok := testIds[run.Test]
+			if !ok {
+				continue
 			}
 			_, err := tx.Exec(r.Context(), `
 			INSERT INTO runs ("hash", status, output, score, test_id, is_baseline)
@@ -96,7 +96,7 @@ func (api *API) GetBaselines(w http.ResponseWriter, r *http.Request) {
 	sql := fmt.Sprintf(`
 	SELECT DISTINCT ON (t.id) r.hash, r.status, r.output, r.score, t.name, r.is_baseline
 	FROM runs AS r JOIN tests as t ON (t.id=r.test_id)
-	WHERE r.is_baseline='t' AND r.status='success' AND t.name=ANY($1)
+	WHERE r.is_baseline='t' AND r.status='success' AND t.name=ANY($1) AND t.is_deleted='f'
 	ORDER BY t.id, r.id DESC
 	`)
 

@@ -20,7 +20,7 @@ func (api *API) GetStats(w http.ResponseWriter, r *http.Request) {
 		FROM checks as ch
 			JOIN commits as ci ON (ci.id=ch.commit_id)
 			JOIN tests as t ON (t.id=ch.test_id)
-		WHERE ch.test_id IS NOT NULL
+		WHERE ch.test_id IS NOT NULL AND t.is_deleted='f'
 		ORDER BY ch.test_id, ci.user_id, ch.id DESC
 	) as s
 	JOIN users as u ON (u.id=s.user_id)

@@ -228,13 +228,15 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 	var crows [][]interface{}
 	for _, stage := range stages {
 		var testID *uint64
-		if v, ok := testIds[stage.Test]; ok {
-			testID = &v
+		if stage.Test != "" {
+			if v, ok := testIds[stage.Test]; ok {
+				testID = &v
+			} else {
+				continue
+			}
 		}
 		crows = append(crows, []interface{}{commitID, testID, stage.Name, stage.Status, stage.Output})
 	}
-
-	fmt.Println(crows)
 
 	err = db.Tx(r.Context(), api.DB, func(tx pgx.Tx) error {
 
