@@ -15,7 +15,7 @@ RUN apk add --no-cache --update docker-cli
 
 COPY --from=build /build/app /srv/app
 
-# client requires root to control Docker
+# runner requires root to control Docker
 COPY misc/init-root.sh /init-root.sh
 RUN chmod +x /init-root.sh
 

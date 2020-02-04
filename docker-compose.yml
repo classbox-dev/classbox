@@ -29,10 +29,10 @@ services:
       - db
     command: ["/srv/app", "api"]
 
-  client:
+  runner:
     build: .
     image: classbox:latest
-    container_name: "classbox-client"
+    container_name: "classbox-runner"
     restart: always
     networks:
       - default
@@ -45,7 +45,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - classbox-data:/srv/data
     entrypoint: "/init-root.sh"
-    command: ["/srv/app", "client"]
+    command: ["/srv/app", "runner"]
 
   db:
     image: mkznts/base-postgres:0.2

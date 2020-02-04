@@ -1,4 +1,4 @@
-package client
+package runner
 
 import (
 	"bytes"
@@ -33,19 +33,19 @@ type Task struct {
 	Runs   []Run
 }
 
-type Client struct {
+type Runner struct {
 	Ctx     context.Context
 	Http    *http.Client
 	ApiURL  string
 	Volumes map[string]opts.Volume
 }
 
-func (cl *Client) task() (*Task, error) {
-	req, err := http.NewRequestWithContext(cl.Ctx, "POST", cl.ApiURL+"/tasks/dequeue", nil)
+func (rr *Runner) task() (*Task, error) {
+	req, err := http.NewRequestWithContext(rr.Ctx, "POST", rr.ApiURL+"/tasks/dequeue", nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not create request: %w", err)
 	}
-	resp, err := cl.Http.Do(req)
+	resp, err := rr.Http.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("could not send pop request: %w", err)
 	}
@@ -70,7 +70,7 @@ func (cl *Client) task() (*Task, error) {
 	return &task, nil
 }
 
-func (cl *Client) finish(task *Task) {
+func (rr *Runner) finish(task *Task) {
 	data, err := json.Marshal(task.Stages)
 	if err != nil {
 		log.Printf("[ERR] %v", err)
@@ -79,13 +79,13 @@ func (cl *Client) finish(task *Task) {
 
 	log.Println(string(data))
 
-	url := fmt.Sprintf("%s/tasks/%s", cl.ApiURL, task.ID)
-	req, err := http.NewRequestWithContext(cl.Ctx, "POST", url, bytes.NewBuffer(data))
+	url := fmt.Sprintf("%s/tasks/%s", rr.ApiURL, task.ID)
+	req, err := http.NewRequestWithContext(rr.Ctx, "POST", url, bytes.NewBuffer(data))
 	if err != nil {
 		log.Printf("[ERR] %v", err)
 		return
 	}
-	resp, err := cl.Http.Do(req)
+	resp, err := rr.Http.Do(req)
 	if err != nil {
 		log.Printf("[ERR] [%s] Could not finish task: %v", task.Ref, err)
 		return
@@ -104,14 +104,14 @@ func (cl *Client) finish(task *Task) {
 	log.Printf("[INFO] [%s] Finished", task.Ref)
 }
 
-func (cl *Client) event() error {
-	task, err := cl.task()
+func (rr *Runner) event() error {
+	task, err := rr.task()
 	if err != nil || task == nil {
 		return err
 	}
 	log.Printf("[INFO] [%s] New task id=%s", task.Ref, task.ID)
 
-	defer cl.finish(task)
+	defer rr.finish(task)
 
 	dataDir := "/srv/data"
 	tmpDir, err := ioutil.TempDir("", "")
@@ -123,7 +123,7 @@ func (cl *Client) event() error {
 		return err
 	}
 
-	r := docker.BuildTests(cl.Ctx, task.URL)
+	r := docker.BuildTests(rr.Ctx, task.URL)
 	task.Stages = append(task.Stages, r.Stages...)
 
 	log.Printf("[INFO] [%s] Build success: %v\n", task.Ref, r.Success())
@@ -159,7 +159,7 @@ func (cl *Client) event() error {
 		_ = os.Chmod(testPath, 0500)
 		_ = os.Chown(testPath, 2000, 2000)
 
-		s := docker.RunTest(cl.Ctx, name)
+		s := docker.RunTest(rr.Ctx, name)
 		task.Stages = append(task.Stages, *s)
 		run.Status = s.Status
 		run.Output = s.Output
@@ -171,24 +171,24 @@ func (cl *Client) event() error {
 		}
 
 		// task.GetRuns = append(task.GetRuns, run)
-		// _ = docker.RunPerf(cl.Ctx, name)
+		// _ = docker.RunPerf(rr.Ctx, name)
 	}
 
 	return nil
 }
 
-func (cl *Client) upgrade() error {
+func (rr *Runner) upgrade() error {
 
-	meta, err := docker.BuildMeta(cl.Ctx)
+	meta, err := docker.BuildMeta(rr.Ctx)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(cl.Ctx, "PUT", cl.ApiURL+"/meta", bytes.NewBuffer([]byte(meta)))
+	req, err := http.NewRequestWithContext(rr.Ctx, "PUT", rr.ApiURL+"/meta", bytes.NewBuffer([]byte(meta)))
 	if err != nil {
 		return err
 	}
-	resp, err := cl.Http.Do(req)
+	resp, err := rr.Http.Do(req)
 	if err != nil {
 		return err
 	}
@@ -209,7 +209,7 @@ func (cl *Client) upgrade() error {
 		return err
 	}
 
-	err = docker.BuildBaseline(cl.Ctx)
+	err = docker.BuildBaseline(rr.Ctx)
 	if err != nil {
 		return err
 	}
@@ -239,12 +239,12 @@ func (cl *Client) upgrade() error {
 		_ = os.Chmod(testPath, 0500)
 		_ = os.Chown(testPath, 2000, 2000)
 
-		s := docker.RunTest(cl.Ctx, name)
+		s := docker.RunTest(rr.Ctx, name)
 		if !s.Success() {
 			return fmt.Errorf("baseline `%s` fails tests: %v", name, string(s.Output))
 		}
 
-		perf, err := docker.RunPerf(cl.Ctx, name)
+		perf, err := docker.RunPerf(rr.Ctx, name)
 		if err != nil {
 			return fmt.Errorf("could not read perf for %s: %w", name, err)
 		}
@@ -258,12 +258,12 @@ func (cl *Client) upgrade() error {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/runs", cl.ApiURL)
-	req, err = http.NewRequestWithContext(cl.Ctx, "PUT", url, bytes.NewBuffer(data))
+	url := fmt.Sprintf("%s/runs", rr.ApiURL)
+	req, err = http.NewRequestWithContext(rr.Ctx, "PUT", url, bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
-	resp, err = cl.Http.Do(req)
+	resp, err = rr.Http.Do(req)
 	if err != nil {
 		return err
 	}
@@ -277,12 +277,12 @@ func (cl *Client) upgrade() error {
 	return nil
 }
 
-func (cl *Client) Do() {
-	// cl.upgrade()
+func (rr *Runner) Do() {
+	// rr.upgrade()
 	// return
 
 	for {
-		err := cl.event()
+		err := rr.event()
 		if err != nil {
 			log.Printf("[ERR] %v", err)
 		}
