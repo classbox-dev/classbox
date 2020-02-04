@@ -54,8 +54,11 @@ func (s *Server) Start() {
 			r.Post("/dequeue", s.API.DequeueTask)
 			r.Post("/enqueue", s.API.EnqueueTask)
 		})
-		r.Get("/runs", s.API.GetRuns)
-		r.Put("/runs", s.API.CreateRuns)
+		r.Route("/runs", func(r chi.Router) {
+			r.Get("/", s.API.GetRuns)
+			r.Put("/", s.API.CreateRuns)
+			r.Get("/baselines", s.API.GetBaselines)
+		})
 		r.Get("/meta", s.API.GetMeta)
 		r.Put("/meta", s.API.UpdateMeta)
 	})

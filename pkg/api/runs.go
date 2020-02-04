@@ -15,10 +15,8 @@ import (
 
 func (api *API) GetRuns(w http.ResponseWriter, r *http.Request) {
 
-	q := r.URL.Query()
-
 	hashes := &pgtype.TextArray{}
-	_ = hashes.Set(q["hash"])
+	_ = hashes.Set(r.URL.Query()["hash"])
 
 	sql := fmt.Sprintf(`
 	SELECT r.hash, r.status, r.output, r.score, t.name, r.is_baseline
@@ -88,4 +86,40 @@ func (api *API) CreateRuns(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.NoContent(w, r)
+}
+
+func (api *API) GetBaselines(w http.ResponseWriter, r *http.Request) {
+
+	tests := &pgtype.TextArray{}
+	_ = tests.Set(r.URL.Query()["test"])
+
+	sql := fmt.Sprintf(`
+	SELECT DISTINCT ON (t.id) r.hash, r.status, r.output, r.score, t.name, r.is_baseline
+	FROM runs AS r JOIN tests as t ON (t.id=r.test_id)
+	WHERE r.is_baseline='t' AND r.status='success' AND t.name=ANY($1)
+	ORDER BY t.id, r.id DESC
+	`)
+
+	rows, err := api.DB.Query(r.Context(), sql, tests)
+	if err != nil {
+		E.Handle(w, r, err)
+		return
+	}
+
+	runs := make([]*models.Run, 0)
+
+	err = db.IterRows(rows, func(rows pgx.Rows) error {
+		run := models.Run{}
+		if err := rows.Scan(&run.Hash, &run.Status, &run.Output, &run.Score, &run.Test, &run.Baseline); err != nil {
+			return errors.WithStack(err)
+		}
+		runs = append(runs, &run)
+		return nil
+	})
+	if err != nil {
+		E.Handle(w, r, err)
+		return
+	}
+
+	render.JSON(w, r, runs)
 }

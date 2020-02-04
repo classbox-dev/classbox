@@ -111,6 +111,25 @@ func (c *Client) GetRuns(ctx context.Context, hashes []string) (map[string]*mode
 	return m, nil
 }
 
+func (c *Client) GetBaselines(ctx context.Context, tests []string) (map[string]*models.Run, error) {
+	vs := url.Values{}
+	for _, h := range tests {
+		vs.Add("test", h)
+	}
+	path := fmt.Sprintf("/runs/baselines?%s", vs.Encode())
+
+	var runs []*models.Run
+	if err := c.request(ctx, "GET", path, nil, &runs); err != nil {
+		return nil, err
+	}
+
+	m := map[string]*models.Run{}
+	for _, r := range runs {
+		m[r.Test] = r
+	}
+	return m, nil
+}
+
 func (c *Client) SubmitRuns(ctx context.Context, runs []*models.Run) error {
 	data, err := json.Marshal(runs)
 	if err != nil {
