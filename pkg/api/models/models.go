@@ -36,3 +36,16 @@ type Task struct {
 	Ref     string `json:"ref"`
 	Archive string `json:"archive"`
 }
+
+type UserStat struct {
+	Login string `json:"login"`
+	Score uint   `json:"score"`
+	Count uint   `json:"count"`
+}
+
+type UserEvent []*struct {
+	Name    string `json:"name"`
+	Updated string `json:"updated_at"`
+	Status  string `json:"status"`
+	Perf    uint   `json:"perf"`
+}

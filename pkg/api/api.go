@@ -38,7 +38,9 @@ func (s *Server) Start() {
 	router.Use(middleware.Timeout(60 * time.Second))
 
 	router.Route("/", func(r chi.Router) {
-		r.Get("/scoreboard", s.API.Scoreboard)
+		r.Route("/stats", func(r chi.Router) {
+			r.Get("/", s.API.GetStats)
+		})
 		r.Route("/signup", func(r chi.Router) {
 			r.Get("/oauth", s.API.OAuthURL)
 			r.Post("/create", s.API.CreateUser)
