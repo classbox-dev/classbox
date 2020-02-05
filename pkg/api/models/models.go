@@ -1,5 +1,7 @@
 package models
 
+import "fmt"
+
 type Test struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
@@ -12,6 +14,13 @@ type Stage struct {
 	Status string `json:"status"`
 	Test   string `json:"test,omitempty"`
 	Output string `json:"output,omitempty"`
+}
+
+func (t *Stage) FillFromRun(stageName string, run *Run) {
+	t.Name = fmt.Sprintf("%s::%s", stageName, run.Test)
+	t.Status = run.Status
+	t.Test = run.Test
+	t.Output = run.Output
 }
 
 func (s *Stage) Success() bool {
@@ -41,6 +50,21 @@ type Task struct {
 	Url    string `json:"archive"`
 	Stages []*Stage
 	Runs   []*Run
+}
+
+func (t *Task) ReportSystemError(test string) {
+	var name string
+	if test == "" {
+		name = "system"
+	} else {
+		name = fmt.Sprintf("test::%s", test)
+	}
+	t.Stages = append(t.Stages, &Stage{
+		Name:   name,
+		Status: "exception",
+		Test:   test,
+		Output: "System error. Reported to administrators.",
+	})
 }
 
 type UserStat struct {

@@ -6,27 +6,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"github.com/mkuznets/classbox/pkg/api/models"
 	"os/exec"
 	"strconv"
 	"strings"
 )
 
-type Stage struct {
-	Status string `json:"status"`
-	Name   string `json:"name"`
-	Test   string `json:"test,omitempty"`
-	Output string `json:"output,omitempty"`
-}
-
-func (s *Stage) Success() bool {
-	return s.Status == "success"
-}
-
 type Result struct {
 	ExitCode int
 	Output   []byte
-	Stages   []Stage
+	Stages   []*models.Stage
 }
 
 func (r *Result) Success() bool {
@@ -75,7 +64,6 @@ func Run(ctx context.Context, volumes map[string]string, args ...string) (*Resul
 func BuildTests(ctx context.Context, url string) *Result {
 	r, err := RunStaged(ctx, map[string]string{"classbox-data": "/out"}, "stdlib-build", "build", "tests", url)
 	if err != nil {
-		log.Print(err)
 		return &Result{1, []byte("system error during build"), nil}
 	}
 	return r
@@ -102,7 +90,7 @@ func BuildMeta(ctx context.Context) (string, error) {
 	}
 	s := r.Stages[0]
 	if !s.Success() {
-		return "", fmt.Errorf("error building meta: %v", string(s.Output))
+		return "", fmt.Errorf("error building meta: %v", s.Output)
 	}
 
 	if !r.Success() {
@@ -111,20 +99,18 @@ func BuildMeta(ctx context.Context) (string, error) {
 	return s.Output, nil
 }
 
-func RunTest(ctx context.Context, name string) *Stage {
-	stage := &Stage{Name: fmt.Sprintf("test::%s", name), Test: name}
-
-	r, err := Run(ctx, map[string]string{"classbox-data": "/in"}, "stdlib-run", name+".test", "-test.v")
+func RunTest(ctx context.Context, test string, run *models.Run) error {
+	r, err := Run(ctx, map[string]string{"classbox-data": "/in"}, "stdlib-run", test+".test", "-test.v")
 	if err != nil {
-		stage.Status = "exception"
-		return stage
+		return err
 	}
 	if r.Success() {
-		stage.Status = "success"
-		return stage
+		run.Status = "success"
+	} else {
+		run.Status, run.Output = "failure", string(r.Output)
 	}
-	stage.Status, stage.Output = "failure", string(r.Output)
-	return stage
+	run.Test = test
+	return nil
 }
 
 func RunPerf(ctx context.Context, name string) (uint64, error) {
