@@ -16,3 +16,13 @@ func UniqueStrings(v interface{}, field string) []string {
 	}
 	return values
 }
+
+func MapStringKeys(v interface{}) []string {
+	m := reflect.ValueOf(v)
+	ks := make([]string, 0, m.Len())
+	iter := m.MapRange()
+	for iter.Next() {
+		ks = append(ks, iter.Key().String())
+	}
+	return ks
+}

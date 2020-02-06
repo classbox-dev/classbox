@@ -90,8 +90,10 @@ func (api *API) CreateRuns(w http.ResponseWriter, r *http.Request) {
 
 func (api *API) GetBaselines(w http.ResponseWriter, r *http.Request) {
 
+	testNames := r.URL.Query()["test"]
+
 	tests := &pgtype.TextArray{}
-	_ = tests.Set(r.URL.Query()["test"])
+	_ = tests.Set(testNames)
 
 	sql := fmt.Sprintf(`
 	SELECT DISTINCT ON (t.id) r.hash, r.status, r.output, r.score, t.name, r.is_baseline
@@ -108,14 +110,28 @@ func (api *API) GetBaselines(w http.ResponseWriter, r *http.Request) {
 
 	runs := make([]*models.Run, 0)
 
+	missing := map[string]struct{}{}
+	for _, t := range testNames {
+		missing[t] = struct{}{}
+	}
+
 	err = db.IterRows(rows, func(rows pgx.Rows) error {
 		run := models.Run{}
 		if err := rows.Scan(&run.Hash, &run.Status, &run.Output, &run.Score, &run.Test, &run.Baseline); err != nil {
 			return errors.WithStack(err)
 		}
 		runs = append(runs, &run)
+		delete(missing, run.Test)
 		return nil
 	})
+
+	if len(missing) > 0 {
+		keys := utils.MapStringKeys(missing)
+		e := fmt.Errorf("missing tests: %v", keys)
+		E.SendError(w, r, e, http.StatusBadRequest, e.Error())
+		return
+	}
+
 	if err != nil {
 		E.Handle(w, r, err)
 		return

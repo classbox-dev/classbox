@@ -3,6 +3,7 @@ package utils_test
 import (
 	"github.com/mkuznets/classbox/pkg/api/utils"
 	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -16,5 +17,16 @@ func TestUniqueStrings(t *testing.T) {
 	expected := []string{"z", "y", "x"}
 	if !reflect.DeepEqual(unique, expected) {
 		t.Fatalf("expected %v, got %v", expected, unique)
+	}
+}
+
+
+func TestMapStringKeys(t *testing.T) {
+	m := map[string]int{"a": 1, "b": 2, "c": 3}
+	keys := utils.MapStringKeys(m)
+	sort.StringSlice(keys).Sort()
+	expected := []string{"a", "b", "c"}
+	if !reflect.DeepEqual(keys, expected) {
+		t.Fatalf("expected %v, got %v", expected, keys)
 	}
 }
