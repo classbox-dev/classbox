@@ -8,7 +8,7 @@ RUN go mod download
 # Build [and lint] the thing
 ADD . /build
 # RUN golangci-lint run --out-format=tab --tests=false ./...
-RUN go build -o app github.com/mkuznets/classbox/cmd/box
+RUN go build -ldflags="-s -w" -o app github.com/mkuznets/classbox/cmd/box
 
 FROM mkznts/base-go:0.1
 RUN apk add --no-cache --update docker-cli
