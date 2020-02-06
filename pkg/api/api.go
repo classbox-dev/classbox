@@ -59,8 +59,10 @@ func (s *Server) Start() {
 			r.Put("/", s.API.CreateRuns)
 			r.Get("/baselines", s.API.GetBaselines)
 		})
-		r.Get("/meta", s.API.GetMeta)
-		r.Put("/meta", s.API.UpdateMeta)
+		r.Get("/tests", s.API.GetTests)
+		r.Put("/tests", s.API.UpdateTests)
+		r.Get("/course", s.API.GetCourse)
+		r.Put("/course", s.API.UpdateCourse)
 	})
 
 	err := http.ListenAndServe(s.Addr, router)

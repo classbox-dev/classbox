@@ -141,12 +141,31 @@ func (c *Client) SubmitRuns(ctx context.Context, runs []*models.Run) error {
 	return nil
 }
 
-func (c *Client) UpdateMeta(ctx context.Context, tests []*models.Test) error {
+func (c *Client) UpdateTests(ctx context.Context, tests []*models.Test) error {
 	data, err := json.Marshal(tests)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	if err := c.request(ctx, "PUT", "/meta", data, nil); err != nil {
+	if err := c.request(ctx, "PUT", "/tests", data, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) GetCourse(ctx context.Context) (*models.Course, error) {
+	var course *models.Course
+	if err := c.request(ctx, "GET", "/course", nil, &course); err != nil {
+		return nil, err
+	}
+	return course, nil
+}
+
+func (c *Client) UpdateCourse(ctx context.Context, ready bool) error {
+	data, err := json.Marshal(map[string]bool{"is_ready": ready})
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	if err := c.request(ctx, "PUT", "/course", data, nil); err != nil {
 		return err
 	}
 	return nil

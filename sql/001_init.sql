@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS runs
     test_id     bigint REFERENCES tests (id) DEFAULT NULL,
     is_baseline boolean                      DEFAULT FALSE
 );
+CREATE INDEX runs_hash_baseline ON runs ("hash", is_baseline);
 
 -- -----------------------------------------------------------------------------
 
@@ -102,9 +103,11 @@ CREATE INDEX "tasks__enqueued_idx" ON tasks (status) WHERE status = 'enqueued';
 
 -- -----------------------------------------------------------------------------
 
-DROP TABLE IF EXISTS versions CASCADE;
-CREATE TABLE IF NOT EXISTS versions
+DROP TABLE IF EXISTS courses CASCADE;
+CREATE TABLE IF NOT EXISTS courses
 (
-    id  bigserial PRIMARY KEY,
-    tag text NOT NULL
+    id         bigserial PRIMARY KEY,
+    name       text        NOT NULL UNIQUE,
+    updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    is_ready   boolean              DEFAULT FALSE
 );

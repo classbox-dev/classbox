@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 func Copy(src, dst string) error {
@@ -60,41 +59,4 @@ func CleanDir(path string) error {
 		}
 	}
 	return nil
-}
-
-type Artifact struct {
-	Path string
-	Hash string
-}
-
-func SaveArtifacts(dataDir, tmpDir string) (map[string]Artifact, error) {
-	files, err := ioutil.ReadDir(dataDir)
-	if err != nil {
-		return nil, fmt.Errorf("error reading data directory: %w", err)
-	}
-	tests := map[string]Artifact{}
-
-	for _, file := range files {
-		path := filepath.Join(dataDir, file.Name())
-		tmpPath := filepath.Join(tmpDir, file.Name())
-
-		fileName := file.Name()
-		if !strings.HasSuffix(fileName, ".test") {
-			continue
-		}
-
-		hash, err := Hash(path)
-		if err != nil {
-			return nil, fmt.Errorf("hash error: %w", err)
-		}
-
-		testName := strings.TrimSuffix(fileName, ".test")
-		err = Copy(path, tmpPath)
-		if err != nil {
-			return nil, fmt.Errorf("copy error: %w", err)
-		}
-
-		tests[testName] = Artifact{tmpPath, hash}
-	}
-	return tests, nil
 }

@@ -1,6 +1,8 @@
 package utils
 
-import "reflect"
+import (
+	"reflect"
+)
 
 func UniqueStrings(v interface{}, field string) []string {
 	hm := map[string]struct{}{}
@@ -8,7 +10,7 @@ func UniqueStrings(v interface{}, field string) []string {
 
 	sl := reflect.ValueOf(v)
 	for i := 0; i < sl.Len(); i++ {
-		item := sl.Index(i).FieldByName(field).String()
+		item := reflect.Indirect(sl.Index(i)).FieldByName(field).String()
 		if _, ok := hm[item]; !ok {
 			values = append(values, item)
 			hm[item] = struct{}{}

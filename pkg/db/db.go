@@ -13,7 +13,7 @@ func Tx(ctx context.Context, pool *pgxpool.Pool, op func(tx pgx.Tx) error) error
 		return errors.Wrap(err, "could not start transaction")
 	}
 	//noinspection GoUnhandledErrorResult
-	defer tx.Rollback(ctx)
+	defer tx.Rollback(ctx)  // nolint
 
 	err = op(tx)
 	if err != nil {

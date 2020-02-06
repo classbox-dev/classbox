@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/go-chi/render"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
@@ -12,7 +13,7 @@ import (
 	"net/http"
 )
 
-func (api *API) GetMeta(w http.ResponseWriter, r *http.Request) {
+func (api *API) GetTests(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := api.DB.Query(r.Context(), `
 	SELECT name, description, topic, score FROM tests WHERE is_deleted='f' ORDER BY name
@@ -41,16 +42,16 @@ func (api *API) GetMeta(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, &tests)
 }
 
-func (api *API) UpdateMeta(w http.ResponseWriter, r *http.Request) {
+func (api *API) UpdateTests(w http.ResponseWriter, r *http.Request) {
 
-	var meta []models.Test
+	var tests []models.Test
 
-	if err := render.DecodeJSON(r.Body, &meta); err != nil {
+	if err := render.DecodeJSON(r.Body, &tests); err != nil {
 		E.SendError(w, r, err, http.StatusBadRequest, "invalid input")
 		return
 	}
 
-	for _, test := range meta {
+	for _, test := range tests {
 		if test.Name == "" {
 			E.SendError(w, r, nil, http.StatusBadRequest, "test name cannot be empty")
 			return
@@ -62,7 +63,7 @@ func (api *API) UpdateMeta(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := db.Tx(r.Context(), api.DB, func(tx pgx.Tx) error {
-		for _, test := range meta {
+		for _, test := range tests {
 			_, err := tx.Exec(r.Context(), `
 			INSERT INTO tests (name, description, topic, score)
 			VALUES ($1, $2, $3, $4)
@@ -79,7 +80,7 @@ func (api *API) UpdateMeta(w http.ResponseWriter, r *http.Request) {
 		}
 
 		testNames := &pgtype.TextArray{}
-		_ = testNames.Set(utils.UniqueStrings(meta, "Name"))
+		_ = testNames.Set(utils.UniqueStrings(tests, "Name"))
 
 		_, err := tx.Exec(r.Context(), `UPDATE tests SET is_deleted='t' WHERE name!=ANY($1)`, testNames)
 		if err != nil {
@@ -93,5 +94,49 @@ func (api *API) UpdateMeta(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	render.NoContent(w, r)
+}
+
+func (api *API) GetCourse(w http.ResponseWriter, r *http.Request) {
+	var course models.Course
+	err := api.DB.QueryRow(r.Context(), `SELECT updated_at, is_ready FROM courses WHERE name='stdlib'`).Scan(&course.Update, &course.Ready)
+	switch {
+	case err == pgx.ErrNoRows:
+		e := fmt.Errorf("no courses found")
+		E.SendError(w, r, e, http.StatusNotFound, e.Error())
+		return
+	case err != nil:
+		E.Handle(w, r, err)
+		return
+	}
+	render.JSON(w, r, &course)
+}
+
+func (api *API) UpdateCourse(w http.ResponseWriter, r *http.Request) {
+
+	var course models.Course
+	if err := render.DecodeJSON(r.Body, &course); err != nil {
+		E.SendError(w, r, err, http.StatusBadRequest, "invalid input")
+		return
+	}
+
+	err := db.Tx(r.Context(), api.DB, func(tx pgx.Tx) error {
+		_, err := tx.Exec(r.Context(), `
+		INSERT INTO courses (name, updated_at, is_ready)
+		VALUES ('stdlib', STATEMENT_TIMESTAMP(), $1)
+		ON CONFLICT ("name") DO UPDATE
+		SET name=EXCLUDED.name,
+			updated_at=EXCLUDED.updated_at,
+			is_ready=EXCLUDED.is_ready
+		`, course.Ready)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		return nil
+	})
+	if err != nil {
+		E.Handle(w, r, err)
+		return
+	}
 	render.NoContent(w, r)
 }

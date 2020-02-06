@@ -72,7 +72,8 @@ func (api *API) CreateRuns(w http.ResponseWriter, r *http.Request) {
 			_, err := tx.Exec(r.Context(), `
 			INSERT INTO runs ("hash", status, output, score, test_id, is_baseline)
 			VALUES ($1, $2, $3, $4, $5, $6)
-			ON CONFLICT ("hash") DO NOTHING
+			ON CONFLICT ("hash") DO UPDATE
+			SET is_baseline=EXCLUDED.is_baseline
 			`, run.Hash, run.Status, run.Output, run.Score, testID, run.Baseline)
 			if err != nil {
 				return errors.WithStack(err)

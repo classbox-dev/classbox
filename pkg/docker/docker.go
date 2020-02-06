@@ -80,23 +80,27 @@ func BuildBaseline(ctx context.Context) error {
 	return nil
 }
 
-func BuildMeta(ctx context.Context) (string, error) {
+func BuildMeta(ctx context.Context) ([]*models.Test, error) {
 	r, err := RunStaged(ctx, nil, "stdlib-builder", "build", "meta")
 	if err != nil {
-		return "", err
+		return nil, err
+	}
+	if !r.Success() {
+		return nil, fmt.Errorf("failed to build meta: %v", string(r.Output))
 	}
 	if len(r.Stages) != 1 {
-		return "", fmt.Errorf("error building meta: %v", string(r.Output))
+		return nil, fmt.Errorf("failed to build meta: %v", string(r.Output))
 	}
 	s := r.Stages[0]
 	if !s.Success() {
-		return "", fmt.Errorf("error building meta: %v", s.Output)
+		return nil, fmt.Errorf("failed to build meta: %v", s.Output)
 	}
-
-	if !r.Success() {
-		return "", fmt.Errorf("error building meta: %v", string(r.Output))
+	var meta []*models.Test
+	err = json.Unmarshal([]byte(s.Output), &meta)
+	if err != nil {
+		return nil, fmt.Errorf("error parting meta: %v", string(r.Output))
 	}
-	return s.Output, nil
+	return meta, nil
 }
 
 func RunTest(ctx context.Context, test string, run *models.Run) error {

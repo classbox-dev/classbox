@@ -1,6 +1,9 @@
 package models
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type Test struct {
 	Name        string `json:"name"`
@@ -44,6 +47,18 @@ type Run struct {
 	Baseline bool   `json:"baseline"`
 }
 
+func (r *Run) CompareToBaseline(b *Run) {
+	if r.Status != "success" {
+		return
+	}
+	percent := r.Score * 1000 / b.Score
+	humanPercent := float64(percent) / 10.
+	r.Output = fmt.Sprintf("%.1f%% of baseline", humanPercent)
+	if percent > 1200 {
+		r.Status = "failure"
+	}
+}
+
 type Task struct {
 	Id     string `json:"id"`
 	Ref    string `json:"ref"`
@@ -78,4 +93,9 @@ type UserEvent []*struct {
 	Updated string `json:"updated_at"`
 	Status  string `json:"status"`
 	Perf    uint   `json:"perf"`
+}
+
+type Course struct {
+	Update time.Time `json:"updated_at,omitempty"`
+	Ready  bool      `json:"is_ready"`
 }

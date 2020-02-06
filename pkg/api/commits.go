@@ -24,7 +24,7 @@ func (api *API) GetCommit(w http.ResponseWriter, r *http.Request) {
 
 	err := api.DB.QueryRow(r.Context(), `
 	SELECT c.id, c.commit, u.login, u.repository_name, UPPER(t.status::text)
-	FROM commits AS c JOIN users AS u ON(c.user_id=u.id) JOIN tasks AS t ON(c.user_id=u.id)
+	FROM commits AS c JOIN users AS u ON(c.user_id=u.id) JOIN tasks AS t ON(c.id=t.commit_id)
 	WHERE c.commit=$1 AND u.login=$2
 	`, commitHash, login).Scan(&commitID, &resp.Commit, &resp.Login, &resp.Repo, &resp.Status)
 
@@ -39,12 +39,14 @@ func (api *API) GetCommit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := api.DB.Query(r.Context(), `
-	SELECT name, UPPER(status::text), output FROM checks WHERE commit_id=$1 ORDER BY test_id, id
+	SELECT name, UPPER(status::text), output FROM checks WHERE commit_id=$1 ORDER BY test_id NULLS FIRST, id
 	`, commitID)
 	if err != nil {
 		E.Handle(w, r, err)
 		return
 	}
+
+	resp.Checks = make([]*models.Stage, 0)
 
 	err = db.IterRows(rows, func(rows pgx.Rows) error {
 		var check models.Stage

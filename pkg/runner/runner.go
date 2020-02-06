@@ -5,58 +5,46 @@ import (
 	"fmt"
 	"github.com/mkuznets/classbox/pkg/api/client"
 	"github.com/mkuznets/classbox/pkg/api/models"
+	"github.com/mkuznets/classbox/pkg/api/utils"
 	"github.com/mkuznets/classbox/pkg/docker"
 	"github.com/mkuznets/classbox/pkg/fileutils"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
 type Runner struct {
-	Ctx    context.Context
-	Http   *http.Client
-	ApiURL string
+	Ctx     context.Context
+	Http    *http.Client
+	DataDir string
+	ApiURL  string
 }
 
 func (rr *Runner) apiClient() *client.Client {
 	return client.New(rr.ApiURL)
 }
 
-func (rr *Runner) finish(task *models.Task) {
+func (rr *Runner) finishTask(task *models.Task) {
 	api := rr.apiClient()
 	err := api.SubmitRuns(rr.Ctx, task.Runs)
 	if err != nil {
-		log.Printf("[WARN] [%s] Could not submit runs: %v", task.Ref, err)
+		log.Printf("[WARN] [%s] could not submit runs: %v", task.Ref, err)
 	}
 	err = api.FinishTask(rr.Ctx, task.Id, task.Stages)
 	if err != nil {
-		log.Printf("[ERR] [%s] Could not finish task: %v", task.Ref, err)
+		log.Printf("[ERR] [%s] could not finish task: %v", task.Ref, err)
 		return
 	}
-	log.Printf("[INFO] [%s] Finished", task.Ref)
+	log.Printf("[INFO] [%s] finished", task.Ref)
 }
 
-func (rr *Runner) event() error {
+func (rr *Runner) runTask(task *models.Task) error {
 
-	api := rr.apiClient()
-	task, err := api.DequeueTask(rr.Ctx)
-
-	if err != nil || task == nil {
-		return err
-	}
-	log.Printf("[INFO] [%s] New task id=%s", task.Ref, task.Id)
-
-	defer rr.finish(task)
-
-	dataDir := "/srv/data"
-	tmpDir, err := ioutil.TempDir("", "")
-	//noinspection GoUnhandledErrorResult
-	defer os.RemoveAll(tmpDir)
-
-	err = fileutils.CleanDir(dataDir)
+	err := fileutils.CleanDir(rr.DataDir)
 	if err != nil {
 		return err
 	}
@@ -64,212 +52,217 @@ func (rr *Runner) event() error {
 	r := docker.BuildTests(rr.Ctx, task.Url)
 	task.Stages = append(task.Stages, r.Stages...)
 
-	log.Printf("[INFO] [%s] Build success: %v\n", task.Ref, r.Success())
+	log.Printf("[INFO] [%s] build success: %v\n", task.Ref, r.Success())
 
 	if !r.Success() {
 		return nil
 	}
 
-	tests, err := fileutils.SaveArtifacts(dataDir, tmpDir)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("[INFO] [%s] Tests found: %d", task.Ref, len(tests))
-
-	//noinspection GoUnhandledErrorResult
-	defer fileutils.CleanDir(dataDir)
-
-	var hashes, testsNames []string
-	for name, test := range tests {
-		hashes = append(hashes, test.Hash)
-		testsNames = append(testsNames, name)
-	}
-
-	cachedRuns, err := api.GetRuns(rr.Ctx, hashes)
-	if err != nil {
-		log.Printf("[ERR] [%s] Could not get cached runs: %v", task.Ref, err)
-	}
-
-	baselines, err := api.GetBaselines(rr.Ctx, testsNames)
+	store, err := rr.newStore(task.Ref, false)
 	if err != nil {
 		task.ReportSystemError("")
+		return errors.WithStack(err)
+	}
+
+	log.Printf("[INFO] [%s] tests found: %d", task.Ref, len(store.artifacts))
+	err = store.Execute(rr.Ctx)
+	if err != nil {
+		task.ReportSystemError("")
+		return errors.WithStack(err)
+	}
+
+	for _, a := range store.artifacts {
+		if a.Run == nil {
+			task.ReportSystemError(a.Test)
+			continue
+		}
+		task.Runs = append(task.Runs, a.Run)
+		stage := &models.Stage{}
+		stage.FillFromRun("test", a.Run)
+		task.Stages = append(task.Stages, stage)
+	}
+	return nil
+}
+
+func (rr *Runner) upgradeCourse() error {
+
+	api := rr.apiClient()
+
+	tests, err := docker.BuildMeta(rr.Ctx)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	err = api.UpdateTests(rr.Ctx, tests)
+	if err != nil {
+		return errors.Wrap(err, "could not save meta")
+	}
+
+	err = fileutils.CleanDir(rr.DataDir)
+	if err != nil {
 		return err
 	}
 
-	for name, test := range tests {
+	err = docker.BuildBaseline(rr.Ctx)
+	if err != nil {
+		return err
+	}
 
-		if cr, ok := cachedRuns[test.Hash]; ok {
-			log.Printf("[INFO] [%s] Using cache for %v (hash=%v)", task.Ref, name, test.Hash)
-			stage := models.Stage{}
-			stage.FillFromRun("test", cr)
-			task.Stages = append(task.Stages, &stage)
-			continue
-		}
+	store, err := rr.newStore("upgrade", true)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
-		baseline, ok := baselines[name]
-		if !ok {
-			log.Printf("[ERR] [%s] baseline for `%s` is not found", task.Ref, name)
-			task.ReportSystemError(name)
-			continue
-		}
+	err = store.Execute(rr.Ctx)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
-		err = fileutils.CleanDir(dataDir)
-		if err != nil {
-			return err
-		}
-		testPath := filepath.Join(dataDir, filepath.Base(test.Path))
-		err := fileutils.Copy(test.Path, testPath)
-		if err != nil {
-			return err
-		}
-		_ = os.Chmod(testPath, 0500)
-		_ = os.Chown(testPath, 2000, 2000)
+	runs := make([]*models.Run, 0, len(store.artifacts))
 
-		run := &models.Run{Hash: test.Hash, Baseline: false}
-		err = docker.RunTest(rr.Ctx, name, run)
-		if err != nil {
-			log.Printf("[ERR] [%s] error during testing `%s`: %v", task.Ref, name, err)
-			task.ReportSystemError(name)
-			continue
-		}
+	for _, a := range store.artifacts {
+		r := *a.Run
+		r.Baseline = true
+		runs = append(runs, &r)
+	}
 
-		log.Printf("[INFO] [%s] Tested `%s`: %s", task.Ref, name, run.Status)
+	err = api.SubmitRuns(rr.Ctx, runs)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
-		if run.Status == "success" {
-			perf, err := docker.RunPerf(rr.Ctx, name)
-			if err != nil {
-				log.Printf("[ERR] [%s] error during perf measuring `%s`: %v", task.Ref, name, err)
-				task.ReportSystemError(name)
-				continue
-			}
-			run.Score = perf
-			percent := run.Score * 100 / (baseline.Score * 5 / 4)
-			run.Output = fmt.Sprintf("you are at %v%% of the baseline", percent)
-
-			if percent > 100 {
-				run.Status = "failure"
-			}
-		}
-
-		task.Runs = append(task.Runs, run)
-		stage := &models.Stage{}
-		stage.FillFromRun("test", run)
-		task.Stages = append(task.Stages, stage)
+	err = api.UpdateCourse(rr.Ctx, true)
+	if err != nil {
+		return errors.WithStack(err)
 	}
 
 	return nil
 }
 
-// func (rr *Runner) upgrade() error {
-//
-// 	meta, err := docker.BuildMeta(rr.Ctx)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	req, err := http.NewRequestWithContext(rr.Ctx, "PUT", rr.ApiURL+"/meta", bytes.NewBuffer([]byte(meta)))
-// 	if err != nil {
-// 		return err
-// 	}
-// 	resp, err := rr.Http.Do(req)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if resp.StatusCode/200 > 1 {
-// 		//noinspection GoUnhandledErrorResult
-// 		defer resp.Body.Close()
-// 		content, _ := ioutil.ReadAll(resp.Body)
-// 		return fmt.Errorf("could not save meta: %v", string(content))
-// 	}
-//
-// 	dataDir := "/srv/data"
-// 	tmpDir, err := ioutil.TempDir("", "")
-// 	//noinspection GoUnhandledErrorResult
-// 	defer os.RemoveAll(tmpDir)
-//
-// 	err = fileutils.CleanDir(dataDir)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	err = docker.BuildBaseline(rr.Ctx)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	tests, err := fileutils.SaveArtifacts(dataDir, tmpDir)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	runs := make([]*models.Run, 0, len(tests))
-//
-// 	//noinspection GoUnhandledErrorResult
-// 	defer fileutils.CleanDir(dataDir)
-//
-// 	for name, test := range tests {
-// 		err = fileutils.CleanDir(dataDir)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		run := models.Run{Hash: test.Hash, Test: name, Baseline: true}
-//
-// 		testPath := filepath.Join(dataDir, filepath.Base(test.Path))
-// 		err := fileutils.Copy(test.Path, testPath)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		_ = os.Chmod(testPath, 0500)
-// 		_ = os.Chown(testPath, 2000, 2000)
-//
-// 		s := docker.RunTest(rr.Ctx, name)
-// 		if !s.Success() {
-// 			return fmt.Errorf("baseline `%s` fails tests: %v", name, s.Output)
-// 		}
-//
-// 		perf, err := docker.RunPerf(rr.Ctx, name)
-// 		if err != nil {
-// 			return fmt.Errorf("could not read perf for %s: %w", name, err)
-// 		}
-// 		run.Score = perf
-// 		run.Status = "success"
-// 		runs = append(runs, &run)
-// 	}
-//
-// 	data, err := json.Marshal(runs)
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	url := fmt.Sprintf("%s/runs", rr.ApiURL)
-// 	req, err = http.NewRequestWithContext(rr.Ctx, "PUT", url, bytes.NewBuffer(data))
-// 	if err != nil {
-// 		return err
-// 	}
-// 	resp, err = rr.Http.Do(req)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	if resp.StatusCode/200 > 1 {
-// 		//noinspection GoUnhandledErrorResult
-// 		defer resp.Body.Close()
-// 		content, _ := ioutil.ReadAll(resp.Body)
-// 		return fmt.Errorf("could not save runs: %v", string(content))
-// 	}
-//
-// 	return nil
-// }
+func (rr *Runner) newStore(ref string, createBaselines bool) (*Store, error) {
+
+	tmpDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	st := &Store{
+		ref:             ref,
+		dataDir:         rr.DataDir,
+		tmpDir:          tmpDir,
+		createBaselines: createBaselines,
+	}
+
+	files, err := ioutil.ReadDir(rr.DataDir)
+	if err != nil {
+		return nil, fmt.Errorf("error reading source directory: %w", err)
+	}
+
+	for _, file := range files {
+		path := filepath.Join(rr.DataDir, file.Name())
+		tmpPath := filepath.Join(tmpDir, file.Name())
+
+		fileName := file.Name()
+		if !strings.HasSuffix(fileName, ".test") {
+			continue
+		}
+
+		hash, err := fileutils.Hash(path)
+		if err != nil {
+			return nil, fmt.Errorf("hash error: %w", err)
+		}
+
+		testName := strings.TrimSuffix(fileName, ".test")
+		err = fileutils.Copy(path, tmpPath)
+		if err != nil {
+			return nil, fmt.Errorf("copy error: %w", err)
+		}
+
+		st.artifacts = append(st.artifacts, &Artifact{
+			Test:     testName,
+			Path:     tmpPath,
+			Hash:     hash,
+			Cache:    nil,
+			Baseline: nil,
+		})
+	}
+
+	api := rr.apiClient()
+
+	cachedRuns, err := api.GetRuns(rr.Ctx, utils.UniqueStrings(st.artifacts, "Hash"))
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	for _, a := range st.artifacts {
+		if v, ok := cachedRuns[a.Hash]; ok {
+			a.Cache = v
+		}
+	}
+
+	if !createBaselines {
+		baselines, err := api.GetBaselines(rr.Ctx, utils.UniqueStrings(st.artifacts, "Test"))
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		for _, a := range st.artifacts {
+			a.Baseline = baselines[a.Test]
+		}
+	}
+
+	return st, nil
+}
 
 func (rr *Runner) Do() {
-	// rr.upgrade()
-	// return
+	api := rr.apiClient()
+
+	upgradeRetries := 0
 
 	for {
-		err := rr.event()
+		err := func() error {
+			if upgradeRetries > 2 {
+				return nil
+			}
+			course, err := api.GetCourse(rr.Ctx)
+			if err != nil {
+				return err
+			}
+			if course.Ready {
+				return nil
+			}
+			log.Printf("[INFO] course upgrade: started")
+			err = rr.upgradeCourse()
+			if err != nil {
+				return err
+			}
+			log.Printf("[INFO] course upgrade: done")
+			upgradeRetries = 0
+			return nil
+		}()
+
 		if err != nil {
-			log.Printf("[ERR] %v", err)
+			log.Printf("[WARN] could not upgrade course: %v", err)
+			upgradeRetries++
 		}
+
+		func() {
+			task, err := api.DequeueTask(rr.Ctx)
+			if err != nil {
+				log.Printf("[ERR] could not dequeue task: %v", err)
+				return
+			}
+			if task == nil {
+				return
+			}
+
+			log.Printf("[INFO] [%s] new task id=%s", task.Ref, task.Id)
+			defer rr.finishTask(task)
+
+			err = rr.runTask(task)
+			if err != nil {
+				log.Printf("[ERR] [%s] execution error: %v", task.Ref, err)
+			}
+		}()
+
 		time.Sleep(3 * time.Second)
 	}
 }

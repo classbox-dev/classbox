@@ -38,6 +38,7 @@ services:
       - default
     environment:
       - DOCKER_HOST=unix:///var/run/docker.sock
+      - DATA_DIR=/srv/data
       - API_URL
     depends_on:
       - api
