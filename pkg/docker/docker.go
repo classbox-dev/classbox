@@ -62,7 +62,7 @@ func Run(ctx context.Context, volumes map[string]string, args ...string) (*Resul
 }
 
 func BuildTests(ctx context.Context, url string) *Result {
-	r, err := RunStaged(ctx, map[string]string{"classbox-data": "/out"}, "stdlib-build", "build", "tests", url)
+	r, err := RunStaged(ctx, map[string]string{"classbox-data": "/out"}, "stdlib-builder", "build", "tests", url)
 	if err != nil {
 		return &Result{1, []byte("system error during build"), nil}
 	}
@@ -70,7 +70,7 @@ func BuildTests(ctx context.Context, url string) *Result {
 }
 
 func BuildBaseline(ctx context.Context) error {
-	r, err := Run(ctx, map[string]string{"classbox-data": "/out"}, "stdlib-build", "build", "baseline")
+	r, err := Run(ctx, map[string]string{"classbox-data": "/out"}, "stdlib-builder", "build", "baseline")
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func BuildBaseline(ctx context.Context) error {
 }
 
 func BuildMeta(ctx context.Context) (string, error) {
-	r, err := RunStaged(ctx, nil, "stdlib-build", "build", "meta")
+	r, err := RunStaged(ctx, nil, "stdlib-builder", "build", "meta")
 	if err != nil {
 		return "", err
 	}
@@ -100,7 +100,7 @@ func BuildMeta(ctx context.Context) (string, error) {
 }
 
 func RunTest(ctx context.Context, test string, run *models.Run) error {
-	r, err := Run(ctx, map[string]string{"classbox-data": "/in"}, "stdlib-run", test+".test", "-test.v")
+	r, err := Run(ctx, map[string]string{"classbox-data": "/in"}, "stdlib-runner", test+".test", "-test.v")
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func RunTest(ctx context.Context, test string, run *models.Run) error {
 func RunPerf(ctx context.Context, name string) (uint64, error) {
 	r, _ := Run(ctx, map[string]string{"classbox-data": "/in"},
 		"--security-opt", "seccomp=unconfined",
-		"stdlib-run",
+		"stdlib-runner",
 		"perf", "stat", "-x", ";", "-r", "10",
 		name+".test", "-test.run", "Perf")
 
