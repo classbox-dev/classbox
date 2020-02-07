@@ -8,6 +8,7 @@ RUN go mod download
 # Build [and lint] the thing
 ADD . /build
 # RUN golangci-lint run --out-format=tab --tests=false ./...
+RUN statik -src /build/web/ -dest ./pkg
 RUN go build -ldflags="-s -w" -o app github.com/mkuznets/classbox/cmd/box
 
 FROM mkznts/base-go:0.1
