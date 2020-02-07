@@ -2,8 +2,10 @@ version: '3.7'
 
 services:
   api:
-    build: .
-    image: classbox:latest
+    build:
+      context: .
+      target: base
+    image: classbox-base:latest
     container_name: "classbox-api"
     restart: always
     networks:
@@ -40,8 +42,10 @@ services:
       - TUNNEL_TARGET=http://api:8080/tasks/enqueue
 
   runner:
-    build: .
-    image: classbox:latest
+    build:
+      context: .
+      target: runner
+    image: classbox-runner:latest
     container_name: "classbox-runner"
     restart: always
     networks:
