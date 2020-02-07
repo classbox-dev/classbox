@@ -30,12 +30,10 @@ func (rr *Runner) apiClient() *client.Client {
 
 func (rr *Runner) finishTask(task *models.Task) {
 	api := rr.apiClient()
-	err := api.SubmitRuns(rr.Ctx, task.Runs)
-	if err != nil {
+	if err := api.SubmitRuns(rr.Ctx, task.Runs); err != nil {
 		log.Printf("[WARN] [%s] could not submit runs: %v", task.Ref, err)
 	}
-	err = api.FinishTask(rr.Ctx, task.Id, task.Stages)
-	if err != nil {
+	if err := api.FinishTask(rr.Ctx, task.Id, task.Stages); err != nil {
 		log.Printf("[ERR] [%s] could not finish task: %v", task.Ref, err)
 		return
 	}
@@ -93,8 +91,7 @@ func (rr *Runner) upgradeCourse() error {
 		return errors.WithStack(err)
 	}
 
-	err = api.UpdateTests(rr.Ctx, tests)
-	if err != nil {
+	if err := api.UpdateTests(rr.Ctx, tests); err != nil {
 		return errors.Wrap(err, "could not save meta")
 	}
 
@@ -102,14 +99,12 @@ func (rr *Runner) upgradeCourse() error {
 		return errors.WithStack(err)
 	}
 
-	err = fileutils.CleanDir(rr.DataDir)
-	if err != nil {
-		return err
+	if err := fileutils.CleanDir(rr.DataDir); err != nil {
+		return errors.WithStack(err)
 	}
 
-	err = docker.BuildBaseline(rr.Ctx)
-	if err != nil {
-		return err
+	if err := docker.BuildBaseline(rr.Ctx); err != nil {
+		return errors.WithStack(err)
 	}
 
 	store, err := rr.newStore("upgrade", true)
@@ -130,13 +125,11 @@ func (rr *Runner) upgradeCourse() error {
 		runs = append(runs, &r)
 	}
 
-	err = api.SubmitRuns(rr.Ctx, runs)
-	if err != nil {
+	if err := api.SubmitRuns(rr.Ctx, runs); err != nil {
 		return errors.WithStack(err)
 	}
 
-	err = api.UpdateCourse(rr.Ctx, true)
-	if err != nil {
+	if err := api.UpdateCourse(rr.Ctx, true); err != nil {
 		return errors.WithStack(err)
 	}
 
