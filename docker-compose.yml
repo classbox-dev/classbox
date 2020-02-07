@@ -59,7 +59,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - classbox-data:/srv/data
-    entrypoint: "/init-root.sh"
     command: ["/srv/app", "runner"]
 
   db:

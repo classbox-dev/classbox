@@ -16,4 +16,4 @@ WORKDIR /srv
 FROM base as runner
 RUN apk add --no-cache --update docker-cli
 # runner requires root to control Docker
-COPY misc/init-root.sh /init-root.sh
+COPY misc/init-root.sh /init.sh
