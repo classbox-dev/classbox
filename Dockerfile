@@ -13,7 +13,8 @@ FROM mkznts/base-go:0.1 as base
 COPY --from=build /build/app /srv/app
 WORKDIR /srv
 
-FROM base as runner
+FROM mkznts/base-go:0.1 as runner
 RUN apk add --no-cache --update docker-cli
 # runner requires root to control Docker
 COPY misc/init-root.sh /init.sh
+COPY --from=build /build/app /srv/app
