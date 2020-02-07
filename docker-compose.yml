@@ -29,6 +29,16 @@ services:
       - db
     command: ["/srv/app", "api"]
 
+  tunnel:
+    image: mkznts/tunnel:0.1
+    container_name: "classbox-tunnel"
+    restart: always
+    depends_on:
+      - api
+    environment:
+      - TUNNEL_URL
+      - TUNNEL_TARGET=http://api:8080/tasks/enqueue
+
   runner:
     build: .
     image: classbox:latest
