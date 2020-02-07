@@ -98,6 +98,10 @@ func (rr *Runner) upgradeCourse() error {
 		return errors.Wrap(err, "could not save meta")
 	}
 
+	if err := docker.BuildDocs(rr.Ctx); err != nil {
+		return errors.WithStack(err)
+	}
+
 	err = fileutils.CleanDir(rr.DataDir)
 	if err != nil {
 		return err

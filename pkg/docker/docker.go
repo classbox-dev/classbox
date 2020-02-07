@@ -80,6 +80,17 @@ func BuildBaseline(ctx context.Context) error {
 	return nil
 }
 
+func BuildDocs(ctx context.Context) error {
+	r, err := Run(ctx, map[string]string{"classbox-docs": "/out"}, "stdlib-builder", "build", "docs")
+	if err != nil {
+		return err
+	}
+	if !r.Success() {
+		return fmt.Errorf("error during docs build: %v", string(r.Output))
+	}
+	return nil
+}
+
 func BuildMeta(ctx context.Context) ([]*models.Test, error) {
 	r, err := RunStaged(ctx, nil, "stdlib-builder", "build", "meta")
 	if err != nil {
