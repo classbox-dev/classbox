@@ -31,6 +31,27 @@ services:
       - db
     command: ["/srv/app", "api"]
 
+  web:
+    build:
+      context: .
+      target: base
+    image: classbox-base:latest
+    container_name: "classbox-web"
+    restart: always
+    networks:
+      - web
+      - default
+    ports:
+      - "8082:8082"
+    expose:
+      - "8082"
+    environment:
+      - ADDR=0.0.0.0:8082
+      - API_URL=http://api:8080
+    depends_on:
+      - api
+    command: ["/srv/app", "web"]
+
   tunnel:
     image: mkznts/tunnel:0.1
     container_name: "classbox-tunnel"

@@ -1,47 +1,39 @@
 package main
 
 import (
-	"fmt"
+	"github.com/mkuznets/classbox/pkg/api/client"
 	_ "github.com/mkuznets/classbox/pkg/statik"
-	"github.com/rakyll/statik/fs"
-	"io/ioutil"
-	"log"
+	"github.com/mkuznets/classbox/pkg/web"
 )
 
 // WebCommand with command line flags and env
 type WebCommand struct {
+	Addr   string `long:"addr" env:"ADDR" description:"HTTP service address" default:"127.0.0.1:8082"`
+	ApiURL string `long:"api-url" env:"API_URL" description:"base API URL" required:"true" default:"http://127.0.0.1:8080"`
 }
 
 // Execute is the entry point for "api" command, called by flag parser
 func (s *WebCommand) Execute(args []string) error {
 
-	statikFS, err := fs.New()
+	ts, err := web.NewTemplates()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	// Access individual files by their paths.
-	r, err := statikFS.Open("/templates/index.html")
-	if err != nil {
-		log.Fatal(err)
+	server := web.Server{
+		Addr: s.Addr,
+		Web: &web.Web{
+			API:       client.New(s.ApiURL),
+			Templates: ts,
+		},
 	}
-	defer r.Close()
-	contents, err := ioutil.ReadAll(r)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(string(contents))
-
+	server.Start()
 	return nil
 }
 
 func init() {
 	var runCommand WebCommand
-	_, err := parser.AddCommand(
-		"web",
-		"",
-		"",
+	_, err := parser.AddCommand("web", "", "",
 		&runCommand)
 	if err != nil {
 		panic(err)

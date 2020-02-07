@@ -23,12 +23,12 @@ func New(baseUrl string) *Client {
 	}
 }
 
-type errorResponse struct {
+type ErrorResponse struct {
 	Code    int
 	Message string `json:"message"`
 }
 
-func (e *errorResponse) Error() string {
+func (e ErrorResponse) Error() string {
 	return fmt.Sprintf("HTTP %d: %s", e.Code, e.Message)
 }
 
@@ -36,11 +36,11 @@ func checkResponse(r *http.Response) error {
 	if r.StatusCode/200 == 1 {
 		return nil
 	}
-	e := errorResponse{Code: r.StatusCode}
+	e := ErrorResponse{Code: r.StatusCode}
 	if err := json.NewDecoder(r.Body).Decode(&e); err != nil {
 		return errors.WithStack(err)
 	}
-	return errors.WithStack(&e)
+	return e
 }
 
 func (c *Client) request(ctx context.Context, method string, path string, body []byte, v interface{}) error {
@@ -109,6 +109,15 @@ func (c *Client) GetRuns(ctx context.Context, hashes []string) (map[string]*mode
 		m[r.Hash] = r
 	}
 	return m, nil
+}
+
+func (c *Client) GetCommit(ctx context.Context, login, commit string) (*models.Commit, error) {
+	path := fmt.Sprintf("/commits/%s:%s", login, commit)
+	var resp models.Commit
+	if err := c.request(ctx, "GET", path, nil, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
 }
 
 func (c *Client) GetBaselines(ctx context.Context, tests []string) (map[string]*models.Run, error) {
