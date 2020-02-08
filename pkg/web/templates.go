@@ -9,12 +9,6 @@ import (
 	"strings"
 )
 
-type Page struct {
-	title    string
-	subtitle string
-	data     interface{}
-}
-
 type Templates struct {
 	fs   http.FileSystem
 	base *template.Template

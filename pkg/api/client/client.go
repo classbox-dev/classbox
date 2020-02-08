@@ -128,6 +128,14 @@ func (c *Client) GetTests(ctx context.Context) ([]*models.Test, error) {
 	return resp, nil
 }
 
+func (c *Client) GetUserStats(ctx context.Context) ([]*models.UserStat, error) {
+	var resp []*models.UserStat
+	if err := c.request(ctx, "GET", "/stats", nil, &resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func (c *Client) GetBaselines(ctx context.Context, tests []string) (map[string]*models.Run, error) {
 	vs := url.Values{}
 	for _, h := range tests {
