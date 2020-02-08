@@ -32,7 +32,7 @@ func (api *API) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 
 	var userID uint64
 	err := api.DB.QueryRow(r.Context(), `
-		SELECT "id" FROM "users" WHERE "github_id"=$1 AND "repository_id"=$2
+	SELECT "id" FROM "users" WHERE "github_id"=$1 AND "repository_id"=$2 LIMIT 1
 	`, data.Sender.ID, data.Repo.ID).Scan(&userID)
 
 	switch {
@@ -128,7 +128,7 @@ func (api *API) DequeueTask(w http.ResponseWriter, r *http.Request) {
 		err = api.DB.QueryRow(r.Context(), `
 		SELECT u.login, c.commit, u.repository_name, u.installation_id
 		FROM commits AS c JOIN users as u ON(u.id=c.user_id)
-		WHERE c.id=$1
+		WHERE c.id=$1 LIMIT 1
 		;`, commitID).Scan(&login, &commitHash, &repoName, &instID)
 
 		switch {
@@ -196,7 +196,7 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 	err := api.DB.QueryRow(r.Context(), `
 	SELECT c.id, c.is_checked
 	FROM commits AS c JOIN tasks AS t ON(c.id=t.commit_id)
-	WHERE t.id=$1
+	WHERE t.id=$1 LIMIT 1
 	;`, taskID).Scan(&commitID, &isChecked)
 
 	switch {

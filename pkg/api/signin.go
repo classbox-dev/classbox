@@ -210,7 +210,7 @@ func (api *API) InstallApp(w http.ResponseWriter, r *http.Request) {
 		honorCode       bool
 	)
 	err = api.DB.QueryRow(r.Context(), `
-	SELECT id, login, repository_name, honor_code FROM "users" WHERE "github_id"=$1
+	SELECT id, login, repository_name, honor_code FROM "users" WHERE "github_id"=$1 LIMIT 1
 	`, inst.Account.ID).Scan(&userId, &login, &repoName, &honorCode)
 	switch {
 	case err == pgx.ErrNoRows:

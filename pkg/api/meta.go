@@ -99,7 +99,7 @@ func (api *API) UpdateTests(w http.ResponseWriter, r *http.Request) {
 
 func (api *API) GetCourse(w http.ResponseWriter, r *http.Request) {
 	var course models.Course
-	err := api.DB.QueryRow(r.Context(), `SELECT updated_at, is_ready FROM courses WHERE name='stdlib'`).Scan(&course.Update, &course.Ready)
+	err := api.DB.QueryRow(r.Context(), `SELECT updated_at, is_ready FROM courses WHERE name='stdlib' LIMIT 1`).Scan(&course.Update, &course.Ready)
 	switch {
 	case err == pgx.ErrNoRows:
 		e := fmt.Errorf("no courses found")

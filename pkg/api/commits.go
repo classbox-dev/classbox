@@ -26,6 +26,7 @@ func (api *API) GetCommit(w http.ResponseWriter, r *http.Request) {
 	SELECT c.id, c.commit, u.login, u.repository_name, UPPER(t.status::text)
 	FROM commits AS c JOIN users AS u ON(c.user_id=u.id) JOIN tasks AS t ON(c.id=t.commit_id)
 	WHERE c.commit=$1 AND u.login=$2
+	LIMIT 1
 	`, commitHash, login).Scan(&commitID, &resp.Commit, &resp.Login, &resp.Repo, &resp.Status)
 
 	switch {
