@@ -120,6 +120,14 @@ func (c *Client) GetCommit(ctx context.Context, login, commit string) (*models.C
 	return &resp, nil
 }
 
+func (c *Client) GetTests(ctx context.Context) ([]*models.Test, error) {
+	var resp []*models.Test
+	if err := c.request(ctx, "GET", "/tests", nil, &resp); err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
 func (c *Client) GetBaselines(ctx context.Context, tests []string) (map[string]*models.Run, error) {
 	vs := url.Values{}
 	for _, h := range tests {

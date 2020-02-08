@@ -22,8 +22,7 @@ func (web *Web) GetCommit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = tpl.Execute(w, commit)
-	if err != nil {
+	if err := web.Render(w, tpl, commit); err != nil {
 		web.HandleError(w, err)
 		return
 	}

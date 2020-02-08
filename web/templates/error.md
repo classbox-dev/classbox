@@ -1,3 +1,4 @@
-# Error
+{{define "title"}}Error{{end -}}
+# Oops...
 
 {{.}}
