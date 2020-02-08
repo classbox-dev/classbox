@@ -38,3 +38,7 @@ func (web *Web) SendError(w http.ResponseWriter, code int, text string) {
 		return
 	}
 }
+
+func (web *Web) NotFound(w http.ResponseWriter, r *http.Request) {
+	web.SendError(w, http.StatusNotFound, "Page not found")
+}

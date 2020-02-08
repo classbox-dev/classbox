@@ -33,6 +33,7 @@ func (s *Server) Start() {
 		r.Get("/", s.Web.GetIndex)
 		r.Get("/commit/{login}:{commitHash:[0-9a-z]+}", s.Web.GetCommit)
 	})
+	router.NotFound(s.Web.NotFound)
 
 	err := http.ListenAndServe(s.Addr, router)
 	if err != nil {
