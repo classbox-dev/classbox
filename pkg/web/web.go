@@ -13,6 +13,7 @@ import (
 type Web struct {
 	API       *client.Client
 	DocsURL   string
+	WebURL    string
 	Templates *Templates
 }
 
@@ -28,10 +29,12 @@ func (s *Server) Start() {
 	// Set a timeout value on the request context (ctx), that will signal
 	// through ctx.Done() that the request has timed out and further
 	// processing should be stopped.
-	router.Use(middleware.Timeout(3 * time.Second))
+	router.Use(middleware.Timeout(10 * time.Second))
 
 	router.Route("/", func(r chi.Router) {
 		r.Get("/", s.Web.GetIndex)
+		r.Get("/signin", s.Web.GetSignin)
+		r.Get("/logout", s.Web.Logout)
 		r.Get("/commit/{login}:{commitHash:[0-9a-z]+}", s.Web.GetCommit)
 	})
 	router.NotFound(s.Web.NotFound)

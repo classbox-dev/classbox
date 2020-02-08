@@ -43,13 +43,16 @@ func checkResponse(r *http.Response) error {
 	return e
 }
 
-func (c *Client) request(ctx context.Context, method string, path string, body []byte, v interface{}) error {
+func (c *Client) createRequest(ctx context.Context, method string, path string, body []byte) (*http.Request, error) {
 	buf := bytes.NewBuffer(body)
-
 	req, err := http.NewRequestWithContext(ctx, method, fmt.Sprintf(c.baseUrl+path), buf)
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
+	return req, nil
+}
+
+func (c *Client) makeRequest(ctx context.Context, req *http.Request, v interface{}) error {
 	r, err := c.http.Do(req)
 	if err != nil {
 		return errors.WithStack(err)
@@ -67,6 +70,14 @@ func (c *Client) request(ctx context.Context, method string, path string, body [
 		return errors.WithStack(err)
 	}
 	return nil
+}
+
+func (c *Client) request(ctx context.Context, method string, path string, body []byte, v interface{}) error {
+	req, err := c.createRequest(ctx, method, path, body)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return c.makeRequest(ctx, req, v)
 }
 
 func (c *Client) DequeueTask(ctx context.Context) (*models.Task, error) {
@@ -128,6 +139,16 @@ func (c *Client) GetTests(ctx context.Context) ([]*models.Test, error) {
 	return resp, nil
 }
 
+func (c *Client) GetOauthUrl(ctx context.Context) (string, error) {
+	var resp struct {
+		Url string `json:"url"`
+	}
+	if err := c.request(ctx, "GET", "/signin/oauth", nil, &resp); err != nil {
+		return "", err
+	}
+	return resp.Url, nil
+}
+
 func (c *Client) GetUserStats(ctx context.Context) ([]*models.UserStat, error) {
 	var resp []*models.UserStat
 	if err := c.request(ctx, "GET", "/stats", nil, &resp); err != nil {
@@ -178,11 +199,30 @@ func (c *Client) UpdateTests(ctx context.Context, tests []*models.Test) error {
 }
 
 func (c *Client) GetCourse(ctx context.Context) (*models.Course, error) {
-	var course *models.Course
+	var course models.Course
 	if err := c.request(ctx, "GET", "/course", nil, &course); err != nil {
 		return nil, err
 	}
-	return course, nil
+	return &course, nil
+}
+
+func (c *Client) GetUser(ctx context.Context, session string) (*models.User, error) {
+	if session == "" {
+		return nil, nil
+	}
+	var user models.User
+	req, err := c.createRequest(ctx, "GET", "/user", nil)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	req.Header.Add("X-Session", session)
+	if err := c.makeRequest(ctx, req, &user); err != nil {
+		if e, ok := err.(*ErrorResponse); ok && e.Code == http.StatusUnauthorized {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (c *Client) UpdateCourse(ctx context.Context, ready bool) error {
@@ -194,4 +234,28 @@ func (c *Client) UpdateCourse(ctx context.Context, ready bool) error {
 		return err
 	}
 	return nil
+}
+
+func (c *Client) CreateUser(ctx context.Context, code, state string) (*models.AuthStage, error) {
+	data, err := json.Marshal(map[string]string{"code": code, "state": state})
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	var resp models.AuthStage
+	if err := c.request(ctx, "POST", "/signin/create", data, &resp); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &resp, nil
+}
+
+func (c *Client) InstallApp(ctx context.Context, instId uint64, state string) (*models.AuthStage, error) {
+	body, err := json.Marshal(&models.AppInstallData{instId, state})
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	var resp models.AuthStage
+	if err := c.request(ctx, "POST", "/signin/install", body, &resp); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &resp, nil
 }

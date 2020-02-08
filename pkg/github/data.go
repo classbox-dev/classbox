@@ -8,7 +8,7 @@ type Repo struct {
 }
 
 type User struct {
-	ID    int    `json:"id"`
+	ID    uint64 `json:"id"`
 	Login string `json:"login"`
 	Email string `json:"email,omitempty"`
 }

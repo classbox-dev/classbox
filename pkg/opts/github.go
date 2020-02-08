@@ -38,6 +38,7 @@ func (g *OAuth) Config() *oauth2.Config {
 // App contains settings of (native) Github App
 type App struct {
 	ID         string `long:"id" env:"ID" description:"app id" required:"true"`
+	Name       string `long:"name" env:"NAME" description:"app name" required:"true"`
 	PrivateKey string `long:"private-key" env:"PRIVATE_KEY" description:"base64-encoded private key in pem format" required:"true"`
 }
 

@@ -22,11 +22,13 @@ services:
       - GITHUB_OAUTH_CLIENT_ID
       - GITHUB_OAUTH_CLIENT_SECRET
       - GITHUB_APP_ID
+      - GITHUB_APP_NAME
       - GITHUB_APP_PRIVATE_KEY
       - AWS_REGION
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
       - AWS_S3_BUCKET
+      - WEB_URL
     depends_on:
       - db
     command: ["/srv/app", "api"]
@@ -49,6 +51,7 @@ services:
       - ADDR=0.0.0.0:8082
       - API_URL=http://api:8080
       - DOCS_URL
+      - WEB_URL
     depends_on:
       - api
     command: ["/srv/app", "web"]

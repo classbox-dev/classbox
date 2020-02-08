@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 )
 
@@ -19,11 +20,11 @@ type Stage struct {
 	Output string `json:"output,omitempty"`
 }
 
-func (t *Stage) FillFromRun(stageName string, run *Run) {
-	t.Name = fmt.Sprintf("%s::%s", stageName, run.Test)
-	t.Status = run.Status
-	t.Test = run.Test
-	t.Output = run.Output
+func (s *Stage) FillFromRun(stageName string, run *Run) {
+	s.Name = fmt.Sprintf("%s::%s", stageName, run.Test)
+	s.Status = run.Status
+	s.Test = run.Test
+	s.Output = run.Output
 }
 
 func (s *Stage) Success() bool {
@@ -98,4 +99,35 @@ type UserEvent []*struct {
 type Course struct {
 	Update time.Time `json:"updated_at,omitempty"`
 	Ready  bool      `json:"is_ready"`
+}
+
+type AppInstallData struct {
+	InstID uint64 `json:"installation_id"`
+	State  string `json:"state"`
+}
+
+type AuthStage struct {
+	Session string `json:"session,omitempty"`
+	Url     string `json:"url,omitempty"`
+}
+
+func (as *AuthStage) SetAuthCookie(w http.ResponseWriter) {
+	if as.Session == "" {
+		return
+	}
+	expiration := time.Now().Add(365 * 24 * time.Hour)
+	cookie := http.Cookie{
+		Name:     "session",
+		Value:    as.Session,
+		Expires:  expiration,
+		HttpOnly: true,
+		// SameSite: http.SameSiteStrictMode,
+		// Secure:   true,
+	}
+	http.SetCookie(w, &cookie)
+}
+
+type User struct {
+	Login string `json:"login"`
+	Repo  string `json:"repo"`
 }

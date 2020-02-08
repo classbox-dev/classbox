@@ -19,6 +19,7 @@ type API struct {
 	App         *opts.App
 	AWS         *opts.AWS
 	RandomState string
+	WebUrl      string
 }
 
 // Server is a
@@ -41,7 +42,7 @@ func (s *Server) Start() {
 		r.Route("/stats", func(r chi.Router) {
 			r.Get("/", s.API.GetStats)
 		})
-		r.Route("/signup", func(r chi.Router) {
+		r.Route("/signin", func(r chi.Router) {
 			r.Get("/oauth", s.API.OAuthURL)
 			r.Post("/create", s.API.CreateUser)
 			r.Post("/install", s.API.InstallApp)
@@ -63,6 +64,7 @@ func (s *Server) Start() {
 		r.Put("/tests", s.API.UpdateTests)
 		r.Get("/course", s.API.GetCourse)
 		r.Put("/course", s.API.UpdateCourse)
+		r.Get("/user", s.API.GetUser)
 	})
 
 	err := http.ListenAndServe(s.Addr, router)

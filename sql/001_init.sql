@@ -7,8 +7,23 @@ CREATE TABLE IF NOT EXISTS users
     email           text   NOT NULL,
     repository_id   bigint NOT NULL,
     repository_name text   NOT NULL,
-    installation_id bigint
+    installation_id bigint,
+    honor_code      boolean DEFAULT FALSE
 );
+
+-- -----------------------------------------------------------------------------
+
+DROP TABLE IF EXISTS sessions;
+CREATE TABLE IF NOT EXISTS sessions
+(
+    id         bigserial PRIMARY KEY,
+    user_id    bigserial REFERENCES users (id),
+    session    text        NOT NULL,
+    expires_at timestamptz NOT NULL
+);
+
+CREATE INDEX sessions__user_id ON sessions (user_id);
+CREATE INDEX sessions__session ON sessions (session);
 
 -- -----------------------------------------------------------------------------
 

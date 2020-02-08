@@ -1,7 +1,7 @@
 package utils_test
 
 import (
-	"github.com/mkuznets/classbox/pkg/api/utils"
+	"github.com/mkuznets/classbox/pkg/utils"
 	"reflect"
 	"sort"
 	"testing"
@@ -19,7 +19,6 @@ func TestUniqueStrings(t *testing.T) {
 		t.Fatalf("expected %v, got %v", expected, unique)
 	}
 }
-
 
 func TestMapStringKeys(t *testing.T) {
 	m := map[string]int{"a": 1, "b": 2, "c": 3}

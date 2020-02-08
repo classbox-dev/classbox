@@ -1,7 +1,14 @@
 package utils
 
 import (
+	"math/rand"
 	"reflect"
+	"strings"
+	"time"
+)
+
+const (
+	alphanum = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
 func UniqueStrings(v interface{}, field string) []string {
@@ -27,4 +34,13 @@ func MapStringKeys(v interface{}) []string {
 		ks = append(ks, iter.Key().String())
 	}
 	return ks
+}
+
+func RandomString(length int) string {
+	rand.Seed(time.Now().UnixNano())
+	var b strings.Builder
+	for i := 0; i < length; i++ {
+		b.WriteByte(alphanum[rand.Intn(len(alphanum))])
+	}
+	return b.String()
 }

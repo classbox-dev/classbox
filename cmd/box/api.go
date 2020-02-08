@@ -3,15 +3,14 @@ package main
 import (
 	"github.com/mkuznets/classbox/pkg/api"
 	"github.com/mkuznets/classbox/pkg/opts"
+	"github.com/mkuznets/classbox/pkg/utils"
 	"log"
-	"math/rand"
-	"strings"
-	"time"
 )
 
 // APICommand with command line flags and env
 type APICommand struct {
 	Addr   string       `long:"addr" env:"ADDR" description:"HTTP service address" default:"127.0.0.1:8080"`
+	WebURL string       `long:"web-url" env:"WEB_URL" description:"url to website" required:"true"`
 	DB     *opts.DB     `group:"PostgreSQL" namespace:"db" env-namespace:"DB"`
 	Github *opts.Github `group:"github" namespace:"github" env-namespace:"GITHUB"`
 	AWS    *opts.AWS    `group:"AWS" namespace:"aws" env-namespace:"AWS"`
@@ -25,14 +24,6 @@ func (s *APICommand) Execute(args []string) error {
 	}
 	log.Print("[INFO] connected to DB")
 
-	alphabet := []byte("abcdefghijklmnopqrstuvwxyz")
-	rand.Seed(time.Now().UnixNano())
-	var b strings.Builder
-	for i := 0; i < 32; i++ {
-		b.WriteByte(alphabet[rand.Intn(len(alphabet))])
-	}
-	state := b.String()
-
 	server := api.Server{
 		Addr: s.Addr,
 		API: api.API{
@@ -40,7 +31,8 @@ func (s *APICommand) Execute(args []string) error {
 			OAuth:       s.Github.OAuth.Config(),
 			App:         s.Github.App,
 			AWS:         s.AWS,
-			RandomState: state,
+			RandomState: utils.RandomString(32),
+			WebUrl:      s.WebURL,
 		},
 	}
 	server.Start()

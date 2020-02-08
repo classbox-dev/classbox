@@ -9,10 +9,10 @@ import (
 	"github.com/jackc/pgx/v4"
 	E "github.com/mkuznets/classbox/pkg/api/errors"
 	"github.com/mkuznets/classbox/pkg/api/models"
-	"github.com/mkuznets/classbox/pkg/api/utils"
 	"github.com/mkuznets/classbox/pkg/db"
 	"github.com/mkuznets/classbox/pkg/github"
 	"github.com/mkuznets/classbox/pkg/s3"
+	"github.com/mkuznets/classbox/pkg/utils"
 	"github.com/pkg/errors"
 	"net/http"
 )

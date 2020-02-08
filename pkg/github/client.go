@@ -150,7 +150,7 @@ func (c *Client) InstallationByLogin(ctx context.Context, login string) (*Instal
 	return &inst, nil
 }
 
-func (c *Client) InstallationByID(ctx context.Context, instID int) (*Installation, error) {
+func (c *Client) InstallationByID(ctx context.Context, instID uint64) (*Installation, error) {
 	path := fmt.Sprintf("/app/installations/%d", instID)
 	data, err := c.Request(ctx, "GET", path, nil, "application/vnd.github.machine-man-preview+json")
 	if err != nil {
@@ -191,6 +191,22 @@ func (c *Client) AuthAsInstallation(ctx context.Context, instID int) error {
 		TokenType:   "token",
 	}
 	return nil
+}
+
+func (c *Client) InstallationRepos(ctx context.Context) ([]*Repo, error) {
+	data, err := c.Request(ctx, "GET", "/installation/repositories", nil, "application/vnd.github.machine-man-preview+json")
+	if err != nil {
+		return nil, err
+	}
+	var resp struct {
+		Repos []*Repo `json:"repositories"`
+	}
+	err = json.Unmarshal(data, &resp)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not decode response")
+	}
+
+	return resp.Repos, nil
 }
 
 func (c *Client) Repo(ctx context.Context, owner, name string) (*Repo, error) {
