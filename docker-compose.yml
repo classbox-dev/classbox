@@ -48,6 +48,7 @@ services:
     environment:
       - ADDR=0.0.0.0:8082
       - API_URL=http://api:8080
+      - DOCS_URL
     depends_on:
       - api
     command: ["/srv/app", "web"]
@@ -74,7 +75,9 @@ services:
     environment:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - DATA_DIR=/srv/data
-      - API_URL
+      - API_URL=http://api:8080
+      - DOCS_URL
+      - WEB_URL
     depends_on:
       - api
     volumes:

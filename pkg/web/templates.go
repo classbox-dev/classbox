@@ -37,6 +37,25 @@ func NewTemplates() (*Templates, error) {
 			pad := strings.Repeat(" ", spaces)
 			return pad + strings.Replace(v, "\n", "\n"+pad, -1)
 		},
+		"inc": func(v int) string {
+			return fmt.Sprintf("%v", v+1)
+		},
+		"status": func(v string) string {
+			switch v {
+			case "SUCCESS":
+				return "\u2705"
+			case "FAILURE":
+				return "\u274c"
+			case "ENQUEUED":
+				return "\u23f3"
+			case "EXECUTING":
+				return "\U0001f3c3\u200d\u2640\ufe0f"
+			case "FINISHED":
+				return "\U0001f3c1"
+			default:
+				return v
+			}
+		},
 	}
 
 	tpl.base = tpl.base.Funcs(customFuncs)

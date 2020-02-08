@@ -5,9 +5,10 @@ import (
 	"net/http"
 )
 
-type page struct {
-	Tests []*models.Test
-	Stats []*models.UserStat
+type indexPage struct {
+	DocsURL string
+	Tests   []*models.Test
+	Stats   []*models.UserStat
 }
 
 func (web *Web) GetIndex(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +31,9 @@ func (web *Web) GetIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := web.Render(w, tpl, page{tests, stats}); err != nil {
+	page := &indexPage{web.DocsURL, tests, stats}
+
+	if err := web.Render(w, tpl, page); err != nil {
 		web.HandleError(w, err)
 		return
 	}

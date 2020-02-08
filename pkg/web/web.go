@@ -12,6 +12,7 @@ import (
 
 type Web struct {
 	API       *client.Client
+	DocsURL   string
 	Templates *Templates
 }
 

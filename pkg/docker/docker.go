@@ -80,8 +80,8 @@ func BuildBaseline(ctx context.Context) error {
 	return nil
 }
 
-func BuildDocs(ctx context.Context) error {
-	r, err := Run(ctx, map[string]string{"classbox-docs": "/out"}, "stdlib-builder", "build", "docs")
+func BuildDocs(ctx context.Context, webUrl string, docsUrl string) error {
+	r, err := Run(ctx, map[string]string{"classbox-docs": "/out"}, "stdlib-builder", "build", "docs", "--web", webUrl, "--docs", docsUrl)
 	if err != nil {
 		return err
 	}

@@ -22,6 +22,8 @@ type Runner struct {
 	Http    *http.Client
 	DataDir string
 	ApiURL  string
+	WebURL  string
+	DocsURL string
 }
 
 func (rr *Runner) apiClient() *client.Client {
@@ -95,7 +97,7 @@ func (rr *Runner) upgradeCourse() error {
 		return errors.Wrap(err, "could not save meta")
 	}
 
-	if err := docker.BuildDocs(rr.Ctx); err != nil {
+	if err := docker.BuildDocs(rr.Ctx, rr.WebURL, rr.DocsURL); err != nil {
 		return errors.WithStack(err)
 	}
 
