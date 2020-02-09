@@ -13,7 +13,7 @@ type Foo struct {
 
 func TestUniqueStrings(t *testing.T) {
 	data := []Foo{{"z"}, {"z"}, {"y"}, {"x"}, {"x"}}
-	unique := utils.UniqueStrings(data, "TextField")
+	unique := utils.UniqueStringFields(data, "TextField")
 	expected := []string{"z", "y", "x"}
 	if !reflect.DeepEqual(unique, expected) {
 		t.Fatalf("expected %v, got %v", expected, unique)

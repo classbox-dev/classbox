@@ -11,7 +11,7 @@ const (
 	alphanum = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
-func UniqueStrings(v interface{}, field string) []string {
+func UniqueStringFields(v interface{}, field string) []string {
 	hm := map[string]struct{}{}
 	values := make([]string, 0)
 

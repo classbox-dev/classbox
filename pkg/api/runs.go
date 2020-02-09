@@ -56,7 +56,7 @@ func (api *API) CreateRuns(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	testNames := utils.UniqueStrings(runs, "Test")
+	testNames := utils.UniqueStringFields(runs, "Test")
 	testIds, err := api.getTestIds(r.Context(), testNames)
 	if err != nil {
 		E.Handle(w, r, err)

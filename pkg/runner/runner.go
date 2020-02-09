@@ -184,7 +184,7 @@ func (rr *Runner) newStore(ref string, createBaselines bool) (*Store, error) {
 
 	api := rr.apiClient()
 
-	cachedRuns, err := api.GetRuns(rr.Ctx, utils.UniqueStrings(st.artifacts, "Hash"))
+	cachedRuns, err := api.GetRuns(rr.Ctx, utils.UniqueStringFields(st.artifacts, "Hash"))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -195,7 +195,7 @@ func (rr *Runner) newStore(ref string, createBaselines bool) (*Store, error) {
 	}
 
 	if !createBaselines {
-		baselines, err := api.GetBaselines(rr.Ctx, utils.UniqueStrings(st.artifacts, "Test"))
+		baselines, err := api.GetBaselines(rr.Ctx, utils.UniqueStringFields(st.artifacts, "Test"))
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}

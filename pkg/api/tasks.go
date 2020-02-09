@@ -259,7 +259,7 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 		E.SendError(w, r, err, http.StatusBadRequest, "stage list cannot be empty")
 	}
 
-	testNames := utils.UniqueStrings(stages, "Test")
+	testNames := utils.UniqueStringFields(stages, "Test")
 	testIds, err := api.getTestIds(r.Context(), testNames)
 	if err != nil {
 		E.Handle(w, r, err)
