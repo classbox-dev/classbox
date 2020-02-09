@@ -23,7 +23,7 @@ func (web *Web) SendError(w http.ResponseWriter, code int, text string) {
 		log.Printf("[ERR] could not send error: %v", e)
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		//noinspection GoUnhandledErrorResult
-		w.Write([]byte("internal system error"))
+		w.Write([]byte("internal system error"))  // nolint
 	}
 	tpl, err := web.Templates.New("error")
 	if err != nil {

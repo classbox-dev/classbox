@@ -249,7 +249,7 @@ func (c *Client) CreateUser(ctx context.Context, code, state string) (*models.Au
 }
 
 func (c *Client) InstallApp(ctx context.Context, instId uint64, state string) (*models.AuthStage, error) {
-	body, err := json.Marshal(&models.AppInstallData{instId, state})
+	body, err := json.Marshal(&models.AppInstallData{InstID: instId, State: state})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
