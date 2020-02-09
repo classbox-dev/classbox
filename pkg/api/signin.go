@@ -32,12 +32,12 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 	data := oauthData{}
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		E.Render(w, r, E.BadRequest(errors.Wrap(err, "invalid input")))
+		E.SendError(w, r, err, http.StatusBadRequest, "invalid input")
 		return
 	}
 
 	if api.RandomState != data.State {
-		E.Render(w, r, E.BadRequest(fmt.Errorf("invalid state")))
+		E.SendError(w, r, nil, http.StatusBadRequest, "invalid state")
 		return
 	}
 
@@ -200,7 +200,7 @@ func (api *API) InstallApp(w http.ResponseWriter, r *http.Request) {
 
 	inst, err := app.InstallationByID(r.Context(), data.InstID)
 	if err != nil {
-		E.Render(w, r, E.NotFound(errors.Wrap(err, "installation not found")))
+		E.SendError(w, r, err, http.StatusNotFound, "installation not found")
 		return
 	}
 
