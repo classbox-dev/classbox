@@ -17,7 +17,7 @@ Your working repository: [{{ .User.Login }}/{{ .User.Repo }}](https://github.com
 * Read [stdlib documentation]({{.DocsURL}}).
 * Start implementing some part of the library to pass one of the tests below
 * Commit and push the implementation to your working repository.
-* The code is automatically tested on each commit. You can see the results on the [GitHub commits page](https://github.com/{{ .User.Login }}/{{ .User.Repo }}/master), your feed, or the scoreboard below.
+* The code is automatically tested on each commit. You can see the results on the [GitHub commits page](https://github.com/{{ .User.Login }}/{{ .User.Repo }}/commits/master), or the scoreboard below.
 {{- end}}
 
 ## Scoreboard

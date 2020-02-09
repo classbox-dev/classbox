@@ -56,6 +56,16 @@ func NewTemplates() (*Templates, error) {
 				return v
 			}
 		},
+		"githubStatus": func(v string) string {
+			switch v {
+			case "success":
+				return ":heavy_check_mark:"
+			case "failure":
+				return ":x:"
+			default:
+				return v
+			}
+		},
 	}
 
 	tpl.base = tpl.base.Funcs(customFuncs)

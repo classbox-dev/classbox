@@ -25,6 +25,7 @@ type Account struct {
 
 type CheckSuiteEvent struct {
 	CheckSuite *CheckSuite   `json:"check_suite"`
+	Action     string        `json:"action"`
 	Repo       *Repo         `json:"repository"`
 	Sender     *User         `json:"sender"`
 	Inst       *Installation `json:"installation"`
@@ -35,7 +36,20 @@ type CheckSuite struct {
 }
 
 type CheckRun struct {
-	ID int `json:"id"`
+	ID             uint64          `json:"id,omitempty"`
+	Name           string          `json:"name,omitempty"`
+	Url            string          `json:"details_url,omitempty"`
+	Commit         string          `json:"head_sha,omitempty"`
+	Status         string          `json:"status,omitempty"`
+	Conclusion     string          `json:"conclusion,omitempty"`
+	StartTime      string          `json:"started_at,omitempty"`
+	CompletionTime string          `json:"completed_at,omitempty"`
+	Output         *CheckRunOutput `json:"output,omitempty"`
+}
+
+type CheckRunOutput struct {
+	Title   string `json:"title"`
+	Summary string `json:"summary"`
 }
 
 type AccessToken struct {

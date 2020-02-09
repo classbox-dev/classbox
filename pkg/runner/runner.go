@@ -52,11 +52,7 @@ func (rr *Runner) runTask(task *models.Task) error {
 	r := docker.BuildTests(rr.Ctx, task.Url)
 	task.Stages = append(task.Stages, r.Stages...)
 
-	log.Printf("[INFO] [%s] build success: %v\n", task.Ref, r.Success())
-
-	if !r.Success() {
-		return nil
-	}
+	log.Printf("[INFO] [%s] build completed", task.Ref)
 
 	store, err := rr.newStore(task.Ref, false)
 	if err != nil {

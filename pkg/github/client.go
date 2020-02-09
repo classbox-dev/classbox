@@ -244,23 +244,41 @@ func (c *Client) CreateRepoFromTemplate(ctx context.Context, src, dst string, is
 	return &repo, nil
 }
 
-func (c *Client) CreateCheckRun(ctx context.Context, login, repo, commit string) (*CheckRun, error) {
+func (c *Client) CreateCheckRun(ctx context.Context, login, repo string, checkRun *CheckRun) (*CheckRun, error) {
+	body, err := json.Marshal(&checkRun)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 	path := fmt.Sprintf("/repos/%s/%s/check-runs", login, repo)
-
-	jsonStr := []byte(fmt.Sprintf(`{"name":"hsecode","head_sha":"%s"}`, commit))
 	data, err := c.Request(
-		ctx, "POST", path, jsonStr,
+		ctx, "POST", path, body,
 		"application/vnd.github.antiope-preview+json")
 	if err != nil {
 		return nil, err
 	}
-
-	checkRun := CheckRun{}
-	err = json.Unmarshal(data, &checkRun)
+	var cr CheckRun
+	err = json.Unmarshal(data, &cr)
 	if err != nil {
-		return &checkRun, errors.Wrap(err, "could not decode response")
+		return nil, errors.Wrap(err, "could not decode response")
 	}
-	return &checkRun, nil
+	return &cr, nil
+}
+
+func (c *Client) UpdateCheckRun(ctx context.Context, login, repo string, checkRun *CheckRun) error {
+	cr := *checkRun
+	id := cr.ID
+	cr.ID = 0
+	body, err := json.Marshal(&cr)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	path := fmt.Sprintf("/repos/%s/%s/check-runs/%d", login, repo, id)
+	_, err = c.Request(ctx, "PATCH", path, body, "application/vnd.github.antiope-preview+json")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (c *Client) Archive(ctx context.Context, login, repo, commit string) ([]byte, error) {

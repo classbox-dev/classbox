@@ -13,31 +13,40 @@ import (
 	"github.com/mkuznets/classbox/pkg/github"
 	"github.com/mkuznets/classbox/pkg/s3"
 	"github.com/mkuznets/classbox/pkg/utils"
+	"github.com/mkuznets/classbox/pkg/web"
 	"github.com/pkg/errors"
 	"net/http"
+	"strings"
+	"time"
 )
 
 func (api *API) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 
-	if r.Header.Get("X-GitHub-Event") != "check_suite" {
+	eventName := r.Header.Get("X-GitHub-Event")
+
+	if eventName != "check_suite" {
 		render.NoContent(w, r)
 		return
 	}
 
-	data := github.CheckSuiteEvent{}
-	if err := render.DecodeJSON(r.Body, &data); err != nil {
+	cs := github.CheckSuiteEvent{}
+	if err := render.DecodeJSON(r.Body, &cs); err != nil {
 		E.SendError(w, r, nil, http.StatusBadRequest, "invalid input")
+		return
+	}
+	if cs.Action != "requested" && cs.Action != "rerequested" {
+		render.NoContent(w, r)
 		return
 	}
 
 	var userID uint64
 	err := api.DB.QueryRow(r.Context(), `
 	SELECT "id" FROM "users" WHERE "github_id"=$1 AND "repository_id"=$2 LIMIT 1
-	`, data.Sender.ID, data.Repo.ID).Scan(&userID)
+	`, cs.Sender.ID, cs.Repo.ID).Scan(&userID)
 
 	switch {
 	case err == pgx.ErrNoRows:
-		e := fmt.Errorf("user not found: %s (id=%d)", data.Sender.Login, data.Sender.ID)
+		e := fmt.Errorf("user not found: %s (id=%d)", cs.Sender.Login, cs.Sender.ID)
 		E.SendError(w, r, e, http.StatusBadRequest, e.Error())
 		return
 	case err != nil:
@@ -51,13 +60,20 @@ func (api *API) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	gh := github.New(appToken)
-	err = gh.AuthAsInstallation(r.Context(), data.Inst.ID)
-	if err != nil {
+	if err := gh.AuthAsInstallation(r.Context(), cs.Inst.ID); err != nil {
 		E.Handle(w, r, errors.Wrap(err, "could not auth as installation"))
 		return
 	}
 
-	checkRun, err := gh.CreateCheckRun(r.Context(), data.Repo.Owner.Login, data.Repo.Name, data.CheckSuite.Head)
+	checkRun, err := gh.CreateCheckRun(
+		r.Context(), cs.Repo.Owner.Login, cs.Repo.Name,
+		&github.CheckRun{
+			Name:   "stdlib tests",
+			Commit: cs.CheckSuite.Head,
+			Status: "queued",
+			Url:    fmt.Sprintf("%s/commit/%s:%s", api.WebUrl, cs.Repo.Owner.Login, cs.CheckSuite.Head),
+		},
+	)
 	if err != nil {
 		E.Handle(w, r, errors.Wrap(err, "could not create a check run"))
 		return
@@ -70,9 +86,10 @@ func (api *API) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		err = tx.QueryRow(r.Context(), `
 		INSERT INTO commits ("user_id", "commit", "check_run_id")
 		VALUES ($1, $2, $3)
-		ON CONFLICT (user_id, commit) DO NOTHING
+		ON CONFLICT (user_id, commit) DO UPDATE
+		SET check_run_id=EXCLUDED.check_run_id, is_checked='f'
 		RETURNING "id"
-		`, userID, data.CheckSuite.Head, checkRun.ID).Scan(&commitID)
+		`, userID, cs.CheckSuite.Head, checkRun.ID).Scan(&commitID)
 
 		switch {
 		case err == pgx.ErrNoRows: // conflict, the same commit
@@ -81,7 +98,14 @@ func (api *API) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 			return errors.WithStack(err)
 		}
 
-		_, err = tx.Exec(r.Context(), `INSERT INTO "tasks" ("commit_id") VALUES ($1);`, commitID)
+		_, err = tx.Exec(r.Context(), `
+		INSERT INTO "tasks" ("commit_id") VALUES ($1) ON CONFLICT (commit_id) DO UPDATE SET status='enqueued';`, commitID)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		_, err = tx.Exec(r.Context(), `
+		DELETE FROM "checks" WHERE commit_id=$1;`, commitID)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -102,6 +126,7 @@ func (api *API) DequeueTask(w http.ResponseWriter, r *http.Request) {
 		taskID                                  string
 		commitID                                uint64
 		instID                                  int
+		checkRunId                              uint64
 		commitHash, login, repoName, archiveURL string
 	)
 
@@ -126,10 +151,10 @@ func (api *API) DequeueTask(w http.ResponseWriter, r *http.Request) {
 		}
 
 		err = api.DB.QueryRow(r.Context(), `
-		SELECT u.login, c.commit, u.repository_name, u.installation_id
+		SELECT u.login, c.commit, u.repository_name, u.installation_id, c.check_run_id
 		FROM commits AS c JOIN users as u ON(u.id=c.user_id)
 		WHERE c.id=$1 LIMIT 1
-		;`, commitID).Scan(&login, &commitHash, &repoName, &instID)
+		;`, commitID).Scan(&login, &commitHash, &repoName, &instID, &checkRunId)
 
 		switch {
 		case err == pgx.ErrNoRows:
@@ -144,9 +169,17 @@ func (api *API) DequeueTask(w http.ResponseWriter, r *http.Request) {
 			return errors.Wrap(err, "could not get app token")
 		}
 		gh := github.New(appToken)
-		err = gh.AuthAsInstallation(r.Context(), instID)
-		if err != nil {
+		if err := gh.AuthAsInstallation(r.Context(), instID); err != nil {
 			return errors.Wrap(err, "could not auth as installation")
+		}
+
+		checkRun := &github.CheckRun{
+			ID:        checkRunId,
+			Status:    "in_progress",
+			StartTime: time.Now().UTC().Format(time.RFC3339),
+		}
+		if err := gh.UpdateCheckRun(r.Context(), login, repoName, checkRun); err != nil {
+			return errors.Wrap(err, "could not update check run")
 		}
 
 		archive, err := gh.Archive(r.Context(), login, repoName, commitHash)
@@ -189,16 +222,21 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		commitID  uint64
-		isChecked bool
+		commitId    uint64
+		isChecked   bool
+		checkRun    github.CheckRun
+		login, repo string
+		instId      int
 	)
 
 	err := api.DB.QueryRow(r.Context(), `
-	SELECT c.id, c.is_checked
-	FROM commits AS c JOIN tasks AS t ON(c.id=t.commit_id)
+	SELECT c.id, c.is_checked, c.check_run_id, u.login, u.repository_name, u.installation_id
+	FROM
+		commits AS c
+		JOIN tasks AS t ON(c.id=t.commit_id)
+		JOIN users AS u ON (u.id=c.user_id)
 	WHERE t.id=$1 LIMIT 1
-	;`, taskID).Scan(&commitID, &isChecked)
-
+	;`, taskID).Scan(&commitId, &isChecked, &checkRun.ID, &login, &repo, &instId)
 	switch {
 	case err == pgx.ErrNoRows:
 		e := fmt.Errorf("unknown task: %v", taskID)
@@ -212,10 +250,13 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var stages []models.Stage
+	var stages []*models.Stage
 	if err = render.DecodeJSON(r.Body, &stages); err != nil {
 		E.SendError(w, r, err, http.StatusBadRequest, "invalid input")
 		return
+	}
+	if len(stages) == 0 {
+		E.SendError(w, r, err, http.StatusBadRequest, "stage list cannot be empty")
 	}
 
 	testNames := utils.UniqueStrings(stages, "Test")
@@ -235,7 +276,45 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 		}
-		crows = append(crows, []interface{}{commitID, testID, stage.Name, stage.Status, stage.Output})
+		crows = append(crows, []interface{}{commitId, testID, stage.Name, stage.Status, stage.Output})
+	}
+
+	title := ""
+	failures := []string{}
+	for _, s := range stages {
+		if s.Status != "success" {
+			failures = append(failures, s.Name)
+		}
+	}
+	checkRun.Status = "completed"
+	checkRun.CompletionTime = time.Now().UTC().Format(time.RFC3339)
+	if len(failures) > 0 {
+		checkRun.Conclusion = "failure"
+		title = fmt.Sprintf("Failed: %s", strings.Join(failures, " , "))
+	} else {
+		checkRun.Conclusion = "success"
+		title = "Success"
+	}
+
+	ts, err := web.NewTemplates()
+	if err != nil {
+		E.Handle(w, r, err)
+		return
+	}
+
+	tpl, err := ts.New("check_run")
+	if err != nil {
+		E.Handle(w, r, err)
+		return
+	}
+	summary := bytes.NewBufferString("")
+	if err := tpl.ExecuteTemplate(summary, "markdown", stages); err != nil {
+		E.Handle(w, r, err)
+		return
+	}
+	checkRun.Output = &github.CheckRunOutput{
+		Title:   title,
+		Summary: summary.String(),
 	}
 
 	err = db.Tx(r.Context(), api.DB, func(tx pgx.Tx) error {
@@ -247,7 +326,7 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 			return errors.WithStack(err)
 		}
 
-		_, err = tx.Exec(r.Context(), `UPDATE commits SET is_checked='t' WHERE id=$1`, commitID)
+		_, err = tx.Exec(r.Context(), `UPDATE commits SET is_checked='t' WHERE id=$1`, commitId)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -259,9 +338,20 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 			return errors.WithStack(err)
 		}
 
+		appToken, err := api.App.Token()
+		if err != nil {
+			return errors.Wrap(err, "could not get app token")
+		}
+		gh := github.New(appToken)
+		if err := gh.AuthAsInstallation(r.Context(), instId); err != nil {
+			return errors.Wrap(err, "could not authenticate as installation")
+		}
+		if err := gh.UpdateCheckRun(r.Context(), login, repo, &checkRun); err != nil {
+			return errors.Wrap(err, "could not finalise check run")
+		}
+
 		return nil
 	})
-
 	if err != nil {
 		E.Handle(w, r, err)
 		return
