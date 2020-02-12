@@ -53,7 +53,7 @@ func (s *Server) Start() {
 		r.Route("/tasks", func(r chi.Router) {
 			r.Post("/{taskID:[0-9a-z-]+}", s.API.FinishTask)
 			r.Post("/dequeue", s.API.DequeueTask)
-			r.Post("/enqueue", s.API.EnqueueTask)
+			r.With(hookValidator(s.API.App.HookSecret)).Post("/enqueue", s.API.EnqueueTask)
 		})
 		r.Route("/runs", func(r chi.Router) {
 			r.Get("/", s.API.GetRuns)

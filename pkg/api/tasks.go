@@ -21,7 +21,6 @@ import (
 )
 
 func (api *API) EnqueueTask(w http.ResponseWriter, r *http.Request) {
-
 	eventName := r.Header.Get("X-GitHub-Event")
 
 	if eventName != "check_suite" {
