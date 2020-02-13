@@ -66,6 +66,9 @@ func NewTemplates() (*Templates, error) {
 				return v
 			}
 		},
+		"unescape": func(str string) template.HTML {
+			return template.HTML(str)
+		},
 	}
 
 	tpl.base = tpl.base.Funcs(customFuncs)
