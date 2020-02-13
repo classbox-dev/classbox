@@ -126,3 +126,5 @@ CREATE TABLE IF NOT EXISTS courses
     updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_ready   boolean              DEFAULT FALSE
 );
+
+INSERT INTO courses (name) VALUES ('stdlib');
