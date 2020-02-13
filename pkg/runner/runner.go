@@ -7,6 +7,7 @@ import (
 	"github.com/mkuznets/classbox/pkg/api/models"
 	"github.com/mkuznets/classbox/pkg/docker"
 	"github.com/mkuznets/classbox/pkg/fileutils"
+	"github.com/mkuznets/classbox/pkg/opts"
 	"github.com/mkuznets/classbox/pkg/utils"
 	"github.com/pkg/errors"
 	"io/ioutil"
@@ -20,6 +21,7 @@ import (
 type Runner struct {
 	Ctx     context.Context
 	Http    *http.Client
+	Jwt     *opts.JwtClient
 	DataDir string
 	ApiURL  string
 	WebURL  string
@@ -27,7 +29,13 @@ type Runner struct {
 }
 
 func (rr *Runner) apiClient() *client.Client {
-	return client.New(rr.ApiURL)
+	token, err := rr.Jwt.Token()
+	if err != nil {
+		panic(err)
+	}
+	c := client.New(rr.ApiURL)
+	c.Auth(token)
+	return c
 }
 
 func (rr *Runner) finishTask(task *models.Task) {

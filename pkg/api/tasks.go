@@ -256,6 +256,7 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(stages) == 0 {
 		E.SendError(w, r, err, http.StatusBadRequest, "stage list cannot be empty")
+		return
 	}
 
 	testNames := utils.UniqueStringFields(stages, "Test")

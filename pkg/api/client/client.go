@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/mkuznets/classbox/pkg/api/models"
 	"github.com/pkg/errors"
+	"golang.org/x/oauth2"
 	"net/http"
 	"net/url"
 )
@@ -14,6 +15,7 @@ import (
 type Client struct {
 	baseUrl string
 	http    *http.Client
+	token   *oauth2.Token
 }
 
 func New(baseUrl string) *Client {
@@ -49,6 +51,9 @@ func (c *Client) createRequest(ctx context.Context, method string, path string, 
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
+	if c.token != nil {
+		c.token.SetAuthHeader(req)
+	}
 	return req, nil
 }
 
@@ -78,6 +83,10 @@ func (c *Client) request(ctx context.Context, method string, path string, body [
 		return errors.WithStack(err)
 	}
 	return c.makeRequest(ctx, req, v)
+}
+
+func (c *Client) Auth(token *oauth2.Token) {
+	c.token = token
 }
 
 func (c *Client) DequeueTask(ctx context.Context) (*models.Task, error) {

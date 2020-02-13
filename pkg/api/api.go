@@ -18,6 +18,7 @@ type API struct {
 	OAuth       *oauth2.Config
 	App         *opts.App
 	AWS         *opts.AWS
+	Jwt         *opts.JwtServer
 	RandomState string
 	WebUrl      string
 }
@@ -33,38 +34,41 @@ type Server struct {
 func (s *Server) Start() {
 	router := chi.NewRouter()
 
-	// Set a timeout value on the request context (ctx), that will signal
-	// through ctx.Done() that the request has timed out and further
-	// processing should be stopped.
-	router.Use(middleware.Timeout(60 * time.Second))
+	router.Use(middleware.Timeout(30 * time.Second))
 
 	router.Route("/", func(r chi.Router) {
-		r.Route("/stats", func(r chi.Router) {
-			r.Get("/", s.API.GetStats)
-		})
+
+		// web endpoints
+		r.Get("/stats", s.API.GetStats)
 		r.Route("/signin", func(r chi.Router) {
 			r.Get("/oauth", s.API.OAuthURL)
 			r.Post("/create", s.API.CreateUser)
 			r.Post("/install", s.API.InstallApp)
 		})
-		r.Route("/commits", func(r chi.Router) {
-			r.Get("/{login}:{commitHash:[0-9a-z]+}", s.API.GetCommit)
-		})
-		r.Route("/tasks", func(r chi.Router) {
-			r.Post("/{taskID:[0-9a-z-]+}", s.API.FinishTask)
-			r.Post("/dequeue", s.API.DequeueTask)
-			r.With(hookValidator(s.API.App.HookSecret)).Post("/enqueue", s.API.EnqueueTask)
-		})
-		r.Route("/runs", func(r chi.Router) {
-			r.Get("/", s.API.GetRuns)
-			r.Put("/", s.API.CreateRuns)
-			r.Get("/baselines", s.API.GetBaselines)
-		})
+		r.Get("/commits/{login}:{commitHash:[0-9a-z]+}", s.API.GetCommit)
 		r.Get("/tests", s.API.GetTests)
-		r.Put("/tests", s.API.UpdateTests)
-		r.Get("/course", s.API.GetCourse)
-		r.Put("/course", s.API.UpdateCourse)
 		r.Get("/user", s.API.GetUser)
+
+		// webhook endpoint
+		r.With(hookValidator(s.API.App.HookSecret)).Post("/tasks/enqueue", s.API.EnqueueTask)
+
+		// private runner's endpoints
+		r.With(jwtValidator(s.API.Jwt.Key)).Route("/", func(r chi.Router) {
+			r.Route("/course", func(r chi.Router) {
+				r.Get("/", s.API.GetCourse)
+				r.Put("/", s.API.UpdateCourse)
+			})
+			r.Put("/tests", s.API.UpdateTests)
+			r.Route("/runs", func(r chi.Router) {
+				r.Get("/", s.API.GetRuns)
+				r.Put("/", s.API.CreateRuns)
+				r.Get("/baselines", s.API.GetBaselines)
+			})
+			r.Route("/tasks", func(r chi.Router) {
+				r.Post("/{taskID:[0-9a-z-]+}", s.API.FinishTask)
+				r.Post("/dequeue", s.API.DequeueTask)
+			})
+		})
 	})
 
 	err := http.ListenAndServe(s.Addr, router)

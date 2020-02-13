@@ -31,7 +31,7 @@ func (api *API) GetStats(w http.ResponseWriter, r *http.Request) {
 	ORDER BY score DESC, login;
 	`)
 	if err != nil {
-		E.Handle(w, r, err)
+		E.Handle(w, r, errors.WithStack(err))
 		return
 	}
 
@@ -48,6 +48,7 @@ func (api *API) GetStats(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		E.Handle(w, r, err)
+		return
 	}
 
 	render.JSON(w, r, &stats)

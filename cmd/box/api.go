@@ -9,11 +9,12 @@ import (
 
 // APICommand with command line flags and env
 type APICommand struct {
-	Addr   string       `long:"addr" env:"ADDR" description:"HTTP service address" default:"127.0.0.1:8080"`
-	WebURL string       `long:"web-url" env:"WEB_URL" description:"url to website" required:"true"`
-	DB     *opts.DB     `group:"PostgreSQL" namespace:"db" env-namespace:"DB"`
-	Github *opts.Github `group:"github" namespace:"github" env-namespace:"GITHUB"`
-	AWS    *opts.AWS    `group:"AWS" namespace:"aws" env-namespace:"AWS"`
+	Addr   string          `long:"addr" env:"ADDR" description:"HTTP service address" default:"127.0.0.1:8080"`
+	WebURL string          `long:"web-url" env:"WEB_URL" description:"url to website" required:"true"`
+	DB     *opts.DB        `group:"PostgreSQL" namespace:"db" env-namespace:"DB"`
+	Github *opts.Github    `group:"github" namespace:"github" env-namespace:"GITHUB"`
+	AWS    *opts.AWS       `group:"AWS" namespace:"aws" env-namespace:"AWS"`
+	Jwt    *opts.JwtServer `group:"JWT" namespace:"jwt" env-namespace:"JWT"`
 }
 
 // Execute is the entry point for "api" command, called by flag parser
@@ -31,6 +32,7 @@ func (s *APICommand) Execute(args []string) error {
 			OAuth:       s.Github.OAuth.Config(),
 			App:         s.Github.App,
 			AWS:         s.AWS,
+			Jwt:         s.Jwt,
 			RandomState: utils.RandomString(32),
 			WebUrl:      s.WebURL,
 		},

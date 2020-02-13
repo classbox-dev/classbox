@@ -30,6 +30,7 @@ services:
       - AWS_SECRET_ACCESS_KEY
       - AWS_S3_BUCKET
       - WEB_URL
+      - JWT_PUBLIC_KEY
     depends_on:
       - db
     command: ["/srv/app", "api"]
@@ -80,6 +81,7 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - DATA_DIR=/srv/data
       - API_URL=http://api:8080
+      - JWT_PRIVATE_KEY
       - DOCS_URL
       - WEB_URL
     depends_on:

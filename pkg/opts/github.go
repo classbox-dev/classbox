@@ -61,10 +61,10 @@ func (app *App) Token() (*oauth2.Token, error) {
 		panic(err)
 	}
 
-	jwtEncoder := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"iat": time.Now().Unix(),
-		"exp": time.Now().Unix() + 10*60,
-		"iss": app.ID,
+	jwtEncoder := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.StandardClaims{
+		IssuedAt:  time.Now().Unix(),
+		ExpiresAt: time.Now().Add(10 * time.Minute).Unix(),
+		Issuer:    app.ID,
 	})
 
 	token, err := jwtEncoder.SignedString(pkey)
