@@ -12,8 +12,10 @@ type Sentry struct {
 
 func (s *Sentry) Init(env, service string) bool {
 	if len(s.Dsn) == 0 {
+		log.Print("[INFO] Sentry: disabled")
 		return false
 	}
+	log.Print("[INFO] Sentry: enabled")
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:         s.Dsn,
 		Debug:       s.Debug,
@@ -24,7 +26,7 @@ func (s *Sentry) Init(env, service string) bool {
 		},
 	})
 	if err != nil {
-		log.Fatalf("sentry.Init: %s", err)
+		log.Fatalf("[ERR] sentry.Init: %s", err)
 	}
 	return true
 }
