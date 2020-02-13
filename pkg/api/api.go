@@ -6,7 +6,6 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/mkuznets/classbox/pkg/opts"
-	"golang.org/x/oauth2"
 	"log"
 	"net/http"
 	"time"
@@ -15,7 +14,7 @@ import (
 // API is a collection of endpoints
 type API struct {
 	DB          *pgxpool.Pool
-	OAuth       *oauth2.Config
+	OAuth       *opts.OAuth
 	App         *opts.App
 	AWS         *opts.AWS
 	Jwt         *opts.JwtServer
@@ -52,8 +51,10 @@ func (s *Server) Start() {
 
 		// web endpoints
 		r.Get("/stats", s.API.GetStats)
-		r.Route("/signin", func(r chi.Router) {
+		r.Route("/auth", func(r chi.Router) {
+			r.Get("/app", s.API.AppURL)
 			r.Get("/oauth", s.API.OAuthURL)
+			r.Post("/signin", s.API.Signin)
 			r.Post("/create", s.API.CreateUser)
 			r.Post("/install", s.API.InstallApp)
 		})

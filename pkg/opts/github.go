@@ -7,6 +7,7 @@ import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/github"
 	"time"
 )
 
@@ -28,19 +29,27 @@ func (g *OAuth) Config() *oauth2.Config {
 		ClientID:     g.ClientID,
 		ClientSecret: g.ClientSecret,
 		Scopes:       []string{"repo"},
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://github.com/login/oauth/authorize",
-			TokenURL: "https://github.com/login/oauth/access_token",
-		},
+		Endpoint:     github.Endpoint,
 	}
 }
 
 // App contains settings of (native) Github App
 type App struct {
-	ID         string `long:"id" env:"ID" description:"app id" required:"true"`
-	Name       string `long:"name" env:"NAME" description:"app name" required:"true"`
-	HookSecret string `long:"hook-secret" env:"HOOK_SECRET" required:"true"`
-	PrivateKey string `long:"private-key" env:"PRIVATE_KEY" description:"base64-encoded private key in pem format" required:"true"`
+	ID           string `long:"id" env:"ID" description:"app id" required:"true"`
+	ClientID     string `long:"client-id" env:"CLIENT_ID" description:"client id" required:"true"`
+	ClientSecret string `long:"client-secret" env:"CLIENT_SECRET" description:"client secret" required:"true"`
+	Name         string `long:"name" env:"NAME" description:"app name" required:"true"`
+	HookSecret   string `long:"hook-secret" env:"HOOK_SECRET" required:"true"`
+	PrivateKey   string `long:"private-key" env:"PRIVATE_KEY" description:"base64-encoded private key in pem format" required:"true"`
+}
+
+// Config returns `oauth2.Config` for the given settings
+func (g *App) Config() *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     g.ClientID,
+		ClientSecret: g.ClientSecret,
+		Endpoint:     github.Endpoint,
+	}
 }
 
 // Token returns JWT token from the configured app key

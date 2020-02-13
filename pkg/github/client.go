@@ -209,6 +209,22 @@ func (c *Client) InstallationRepos(ctx context.Context) ([]*Repo, error) {
 	return resp.Repos, nil
 }
 
+func (c *Client) ReposByInstID(ctx context.Context, instID uint64) ([]*Repo, error) {
+	path := fmt.Sprintf("/user/installations/%d/repositories", instID)
+	data, err := c.Request(ctx, "GET", path, nil, "application/vnd.github.machine-man-preview+json")
+	if err != nil {
+		return nil, err
+	}
+	var resp struct {
+		Repos []*Repo `json:"repositories"`
+	}
+	err = json.Unmarshal(data, &resp)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not decode response")
+	}
+	return resp.Repos, nil
+}
+
 func (c *Client) Repo(ctx context.Context, owner, name string) (*Repo, error) {
 	path := fmt.Sprintf("/repos/%s/%s", owner, name)
 	data, err := c.Request(ctx, "GET", path, nil, "")

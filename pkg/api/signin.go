@@ -18,13 +18,107 @@ import (
 
 const repoName = "hsecode-stdlib"
 
+func (api *API) AppURL(w http.ResponseWriter, r *http.Request) {
+	render.JSON(w, r, map[string]string{"url": api.App.Config().AuthCodeURL(api.RandomState)})
+}
+
 func (api *API) OAuthURL(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, map[string]string{"url": api.OAuth.AuthCodeURL(api.RandomState)})
+	render.JSON(w, r, map[string]string{"url": api.OAuth.Config().AuthCodeURL(api.RandomState)})
 }
 
 type oauthData struct {
 	Code  string `json:"code"`
 	State string `json:"state"`
+}
+
+func (api *API) Signin(w http.ResponseWriter, r *http.Request) {
+
+	data := oauthData{}
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		E.SendError(w, r, err, http.StatusBadRequest, "invalid input")
+		return
+	}
+
+	if api.RandomState != data.State {
+		E.SendError(w, r, nil, http.StatusBadRequest, "invalid state")
+		return
+	}
+
+	token, err := api.App.Config().Exchange(r.Context(), data.Code)
+	if err != nil {
+		E.Handle(w, r, errors.Wrap(err, "could not get token"))
+		return
+	}
+
+	redirectToOAuth := func() {
+		render.JSON(w, r, models.AuthStage{Url: api.OAuth.Config().AuthCodeURL(api.RandomState)})
+	}
+
+	gh := github.New(token)
+
+	user, err := gh.User(r.Context())
+	if err != nil {
+		E.Handle(w, r, errors.Wrap(err, "user request error"))
+		return
+	}
+
+	repo, err := gh.Repo(r.Context(), user.Login, repoName)
+	if err != nil {
+		if e, ok := err.(*github.ErrorResponse); ok && e.NotFound() {
+			redirectToOAuth()
+			return
+		} else {
+			E.Handle(w, r, errors.Wrap(err, "repo request error"))
+			return
+		}
+	}
+
+	err = db.Tx(r.Context(), api.DB, func(tx pgx.Tx) error {
+		var (
+			userId         uint64
+			installationId *uint64
+		)
+		err := tx.QueryRow(r.Context(), `
+		UPDATE "users" SET login=$2, email=$3, repository_id=$4, repository_name=$5
+		WHERE "github_id"=$1
+		RETURNING id, installation_id
+		`, user.ID, user.Login, user.Email, repo.ID, repo.Name).Scan(&userId, &installationId)
+		switch {
+		case err == pgx.ErrNoRows:
+			redirectToOAuth()
+			return nil
+		case err != nil:
+			return errors.WithStack(err)
+		}
+
+		found := false
+		if installationId != nil {
+			repos, err := gh.ReposByInstID(r.Context(), *installationId)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			for _, r := range repos {
+				if r.ID == repo.ID {
+					found = true
+				}
+			}
+		}
+		if !found {
+			redirectToOAuth()
+			return nil
+		}
+		session, err := createSession(r.Context(), tx, userId)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		render.JSON(w, r, &models.AuthStage{Session: session, Url: api.WebUrl})
+		return nil
+	})
+	if err != nil {
+		E.Handle(w, r, err)
+		return
+	}
 }
 
 func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +135,7 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := api.OAuth.Exchange(r.Context(), data.Code)
+	token, err := api.OAuth.Config().Exchange(r.Context(), data.Code)
 	if err != nil {
 		E.Handle(w, r, errors.Wrap(err, "could not get token"))
 		return
@@ -95,10 +189,10 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// err = gh.RevokeOAuth(r.Context(), api.OAuth.ClientID, api.OAuth.ClientSecret)
-	// if err != nil {
-	// 	log.Printf("[WARN] could not revoke oauth authorization: %v", err)
-	// }
+	err = gh.RevokeOAuth(r.Context(), api.OAuth.ClientID, api.OAuth.ClientSecret)
+	if err != nil {
+		log.Printf("[WARN] could not revoke oauth authorization: %v", err)
+	}
 
 	appToken, err := api.App.Token()
 	if err != nil {

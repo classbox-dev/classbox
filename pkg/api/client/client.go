@@ -152,7 +152,17 @@ func (c *Client) GetOauthUrl(ctx context.Context) (string, error) {
 	var resp struct {
 		Url string `json:"url"`
 	}
-	if err := c.request(ctx, "GET", "/signin/oauth", nil, &resp); err != nil {
+	if err := c.request(ctx, "GET", "/auth/oauth", nil, &resp); err != nil {
+		return "", err
+	}
+	return resp.Url, nil
+}
+
+func (c *Client) GetAppUrl(ctx context.Context) (string, error) {
+	var resp struct {
+		Url string `json:"url"`
+	}
+	if err := c.request(ctx, "GET", "/auth/app", nil, &resp); err != nil {
 		return "", err
 	}
 	return resp.Url, nil
@@ -245,13 +255,25 @@ func (c *Client) UpdateCourse(ctx context.Context, ready bool) error {
 	return nil
 }
 
+func (c *Client) Signin(ctx context.Context, code, state string) (*models.AuthStage, error) {
+	data, err := json.Marshal(map[string]string{"code": code, "state": state})
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	var resp models.AuthStage
+	if err := c.request(ctx, "POST", "/auth/signin", data, &resp); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return &resp, nil
+}
+
 func (c *Client) CreateUser(ctx context.Context, code, state string) (*models.AuthStage, error) {
 	data, err := json.Marshal(map[string]string{"code": code, "state": state})
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	var resp models.AuthStage
-	if err := c.request(ctx, "POST", "/signin/create", data, &resp); err != nil {
+	if err := c.request(ctx, "POST", "/auth/create", data, &resp); err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return &resp, nil
@@ -263,7 +285,7 @@ func (c *Client) InstallApp(ctx context.Context, instId uint64, state string) (*
 		return nil, errors.WithStack(err)
 	}
 	var resp models.AuthStage
-	if err := c.request(ctx, "POST", "/signin/install", body, &resp); err != nil {
+	if err := c.request(ctx, "POST", "/auth/install", body, &resp); err != nil {
 		return nil, errors.WithStack(err)
 	}
 	return &resp, nil

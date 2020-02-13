@@ -33,7 +33,7 @@ func (s *APICommand) Execute(args []string) error {
 		Sentry: s.Sentry,
 		API: api.API{
 			DB:          db,
-			OAuth:       s.Github.OAuth.Config(),
+			OAuth:       s.Github.OAuth,
 			App:         s.Github.App,
 			AWS:         s.AWS,
 			Jwt:         s.Jwt,

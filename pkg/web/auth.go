@@ -10,12 +10,24 @@ func (web *Web) GetSignin(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Query().Get("step") {
 
 	default:
-		url, err := web.API.GetOauthUrl(r.Context())
+		url, err := web.API.GetAppUrl(r.Context())
 		if err != nil {
 			web.handleSigninError(w, r, err)
 			return
 		}
 		http.Redirect(w, r, url, http.StatusFound)
+		return
+
+	case "signin":
+		code := r.URL.Query().Get("code")
+		state := r.URL.Query().Get("state")
+		stage, err := web.API.Signin(r.Context(), code, state)
+		if err != nil {
+			web.handleSigninError(w, r, err)
+			return
+		}
+		stage.SetAuthCookie(w)
+		http.Redirect(w, r, stage.Url, http.StatusFound)
 		return
 
 	case "create":
