@@ -10,6 +10,7 @@ import (
 
 // RunnerCommand with command line flags and env
 type RunnerCommand struct {
+	Env     *opts.Env       `group:"Environment" namespace:"env" env-namespace:"ENV"`
 	ApiURL  string          `long:"api-url" env:"API_URL" description:"base API URL" required:"true"`
 	DataDir string          `long:"data-dir" env:"DATA_DIR" description:"exposed data directory" required:"true"`
 	WebURL  string          `long:"web-url" env:"WEB_URL" description:"url to website" required:"true"`
@@ -33,6 +34,7 @@ func (s *RunnerCommand) Execute(args []string) error {
 
 	cl := &runner.Runner{
 		Ctx:     ctx,
+		Env:     s.Env,
 		Http:    &http.Client{},
 		Jwt:     s.Jwt,
 		ApiURL:  s.ApiURL,

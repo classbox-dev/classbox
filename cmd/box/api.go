@@ -9,6 +9,7 @@ import (
 
 // APICommand with command line flags and env
 type APICommand struct {
+	Env    *opts.Env       `group:"Environment" namespace:"env" env-namespace:"ENV"`
 	Addr   string          `long:"addr" env:"ADDR" description:"HTTP service address" default:"127.0.0.1:8080"`
 	WebURL string          `long:"web-url" env:"WEB_URL" description:"url to website" required:"true"`
 	DB     *opts.DB        `group:"PostgreSQL" namespace:"db" env-namespace:"DB"`
@@ -27,6 +28,7 @@ func (s *APICommand) Execute(args []string) error {
 
 	server := api.Server{
 		Addr: s.Addr,
+		Env:  s.Env,
 		API: api.API{
 			DB:          db,
 			OAuth:       s.Github.OAuth.Config(),

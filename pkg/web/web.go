@@ -2,6 +2,7 @@ package web
 
 import (
 	"github.com/mkuznets/classbox/pkg/api/client"
+	"github.com/mkuznets/classbox/pkg/opts"
 	"log"
 	"net/http"
 	"time"
@@ -19,11 +20,14 @@ type Web struct {
 
 type Server struct {
 	Addr string
+	Env  *opts.Env
 	Port int
 	Web  *Web
 }
 
 func (s *Server) Start() {
+	log.Printf("[INFO] environment: %s", s.Env.Type)
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.Recoverer)

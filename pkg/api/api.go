@@ -26,17 +26,19 @@ type API struct {
 // Server is a
 type Server struct {
 	Addr string
+	Env  *opts.Env
 	Port int
 	API  API
 }
 
 // Start initialises the server
 func (s *Server) Start() {
+	log.Printf("[INFO] environment: %s", s.Env.Type)
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(30 * time.Second))
-
 
 	router.Route("/", func(r chi.Router) {
 

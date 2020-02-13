@@ -21,6 +21,7 @@ import (
 type Runner struct {
 	Ctx     context.Context
 	Http    *http.Client
+	Env     *opts.Env
 	Jwt     *opts.JwtClient
 	DataDir string
 	ApiURL  string
@@ -216,6 +217,8 @@ func (rr *Runner) newStore(ref string, createBaselines bool) (*Store, error) {
 }
 
 func (rr *Runner) Do() {
+	log.Printf("[INFO] environment: %s", rr.Env.Type)
+
 	api := rr.apiClient()
 
 	upgradeRetries := 0

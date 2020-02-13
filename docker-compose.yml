@@ -17,6 +17,7 @@ services:
       - "8080"
     environment:
       - ADDR=0.0.0.0:8080
+      - ENV_TYPE
       - DB_HOST
       - DB_USER
       - GITHUB_OAUTH_CLIENT_ID
@@ -52,6 +53,7 @@ services:
     environment:
       - ADDR=0.0.0.0:8082
       - API_URL=http://api:8080
+      - ENV_TYPE
       - DOCS_URL
       - WEB_URL
     depends_on:
@@ -81,6 +83,7 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - DATA_DIR=/srv/data
       - API_URL=http://api:8080
+      - ENV_TYPE
       - JWT_PRIVATE_KEY
       - DOCS_URL
       - WEB_URL
