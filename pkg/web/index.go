@@ -24,10 +24,10 @@ func (web *Web) GetIndex(w http.ResponseWriter, r *http.Request) {
 		web.HandleError(w, err)
 		return
 	}
-	user, err := web.getUser(r)
-	if err != nil {
-		web.HandleError(w, err)
-		return
+
+	var user *models.User
+	if v, ok := r.Context().Value("User").(*models.User); ok {
+		user = v
 	}
 
 	tpl, err := web.Templates.New("index")
@@ -47,12 +47,4 @@ func (web *Web) GetIndex(w http.ResponseWriter, r *http.Request) {
 		web.HandleError(w, err)
 		return
 	}
-}
-
-func (web *Web) getUser(r *http.Request) (*models.User, error) {
-	session, err := r.Cookie("session")
-	if err != nil {
-		return nil, nil
-	}
-	return web.API.GetUser(r.Context(), session.Value)
 }

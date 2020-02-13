@@ -30,7 +30,7 @@ func (s *Server) Start() {
 	router.Use(middleware.Timeout(10 * time.Second))
 
 	router.Route("/", func(r chi.Router) {
-		r.Get("/", s.Web.GetIndex)
+		r.With(sessionAuth(s.Web.API.GetUser)).Get("/", s.Web.GetIndex)
 		r.Get("/signin", s.Web.GetSignin)
 		r.Get("/logout", s.Web.Logout)
 		r.Get("/commit/{login}:{commitHash:[0-9a-z]+}", s.Web.GetCommit)
