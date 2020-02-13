@@ -90,6 +90,13 @@ services:
       - DOCS_URL
       - WEB_URL
       - SENTRY_DSN
+      - DOCKER_PULL
+      - DOCKER_BUILDER_IMAGE
+      - DOCKER_RUNNER_IMAGE
+      - DOCKER_LOGIN
+      - DOCKER_REPO_USERNAME
+      - DOCKER_REPO_PASSWORD
+      - DOCKER_REPO_HOST
     depends_on:
       - api
     volumes:

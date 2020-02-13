@@ -17,6 +17,7 @@ type RunnerCommand struct {
 	DocsURL string          `long:"docs-url" env:"DOCS_URL" description:"url to generated docs" required:"true"`
 	Jwt     *opts.JwtClient `group:"JWT" namespace:"jwt" env-namespace:"JWT"`
 	Sentry  *opts.Sentry    `group:"Sentry" namespace:"sentry" env-namespace:"SENTRY"`
+	Docker  *opts.Docker    `group:"Docker" namespace:"docker"  env-namespace:"DOCKER"`
 	Debug   bool            `long:"debug" description:"show debug info" required:"false"`
 }
 
@@ -39,6 +40,7 @@ func (s *RunnerCommand) Execute(args []string) error {
 		Sentry:  s.Sentry,
 		Http:    &http.Client{},
 		Jwt:     s.Jwt,
+		Docker:  s.Docker,
 		ApiURL:  s.ApiURL,
 		WebURL:  s.WebURL,
 		DocsURL: s.DocsURL,

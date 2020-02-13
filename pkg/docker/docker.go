@@ -4,13 +4,18 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/mkuznets/classbox/pkg/api/models"
+	"github.com/pkg/errors"
 	"os/exec"
 	"strconv"
 	"strings"
 )
+
+type Client struct {
+	BuilderImage string
+	RunnerImage  string
+}
 
 type Result struct {
 	ExitCode int
@@ -22,8 +27,8 @@ func (r *Result) Success() bool {
 	return r.ExitCode == 0
 }
 
-func RunStaged(ctx context.Context, volumes map[string]string, args ...string) (*Result, error) {
-	r, err := Run(ctx, volumes, args...)
+func (client *Client) runStaged(ctx context.Context, volumes map[string]string, args ...string) (*Result, error) {
+	r, err := client.run(ctx, volumes, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +39,7 @@ func RunStaged(ctx context.Context, volumes map[string]string, args ...string) (
 	return r, nil
 }
 
-func Run(ctx context.Context, volumes map[string]string, args ...string) (*Result, error) {
+func (client *Client) run(ctx context.Context, volumes map[string]string, args ...string) (*Result, error) {
 	cArgs := []string{"run", "--rm"}
 	for s, t := range volumes {
 		cArgs = append(cArgs, "-v", fmt.Sprintf("%s:%s", s, t))
@@ -48,29 +53,54 @@ func Run(ctx context.Context, volumes map[string]string, args ...string) (*Resul
 	cmd.Stderr = &out
 	err := cmd.Run()
 
-	st := Result{}
-
+	var result Result
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
-			st.ExitCode = exitError.ExitCode()
+			result.ExitCode = exitError.ExitCode()
 		} else {
 			return nil, err
 		}
 	}
-	st.Output = out.Bytes()
-	return &st, nil
+	result.Output = out.Bytes()
+	return &result, nil
 }
 
-func BuildTests(ctx context.Context, url string) *Result {
-	r, err := RunStaged(ctx, map[string]string{"classbox-data": "/out"}, "stdlib-builder", "build", "tests", url)
+func (client *Client) Login(ctx context.Context, username, password, host string) error {
+	cmd := exec.CommandContext(ctx, "docker", "login", "-u", username, "-p", password, host)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	err := cmd.Run()
+	if err != nil {
+		return errors.Wrap(err, out.String())
+	}
+	return nil
+}
+
+func (client *Client) PullImages(ctx context.Context) error {
+	for _, image := range []string{client.BuilderImage, client.RunnerImage} {
+		cmd := exec.CommandContext(ctx, "docker", "pull", image)
+		var out bytes.Buffer
+		cmd.Stdout = &out
+		cmd.Stderr = &out
+		err := cmd.Run()
+		if err != nil {
+			return errors.Wrap(err, out.String())
+		}
+	}
+	return nil
+}
+
+func (client *Client) BuildTests(ctx context.Context, url string) *Result {
+	r, err := client.runStaged(ctx, map[string]string{"classbox-data": "/out"}, client.BuilderImage, "build", "tests", url)
 	if err != nil {
 		return &Result{1, []byte("system error during build"), nil}
 	}
 	return r
 }
 
-func BuildBaseline(ctx context.Context) error {
-	r, err := Run(ctx, map[string]string{"classbox-data": "/out"}, "stdlib-builder", "build", "baseline")
+func (client *Client) BuildBaseline(ctx context.Context) error {
+	r, err := client.run(ctx, map[string]string{"classbox-data": "/out"}, client.BuilderImage, "build", "baseline")
 	if err != nil {
 		return err
 	}
@@ -80,8 +110,8 @@ func BuildBaseline(ctx context.Context) error {
 	return nil
 }
 
-func BuildDocs(ctx context.Context, webUrl string, docsUrl string) error {
-	r, err := Run(ctx, map[string]string{"classbox-docs": "/out"}, "stdlib-builder", "build", "docs", "--web", webUrl, "--docs", docsUrl)
+func (client *Client) BuildDocs(ctx context.Context, webUrl string, docsUrl string) error {
+	r, err := client.run(ctx, map[string]string{"classbox-docs": "/out"}, client.BuilderImage, "build", "docs", "--web", webUrl, "--docs", docsUrl)
 	if err != nil {
 		return err
 	}
@@ -91,8 +121,8 @@ func BuildDocs(ctx context.Context, webUrl string, docsUrl string) error {
 	return nil
 }
 
-func BuildMeta(ctx context.Context) ([]*models.Test, error) {
-	r, err := RunStaged(ctx, nil, "stdlib-builder", "build", "meta")
+func (client *Client) BuildMeta(ctx context.Context) ([]*models.Test, error) {
+	r, err := client.runStaged(ctx, nil, client.BuilderImage, "build", "meta")
 	if err != nil {
 		return nil, err
 	}
@@ -114,8 +144,8 @@ func BuildMeta(ctx context.Context) ([]*models.Test, error) {
 	return meta, nil
 }
 
-func RunTest(ctx context.Context, test string, run *models.Run) error {
-	r, err := Run(ctx, map[string]string{"classbox-data": "/in"}, "stdlib-runner", test+".test", "-test.v")
+func (client *Client) RunTest(ctx context.Context, test string, run *models.Run) error {
+	r, err := client.run(ctx, map[string]string{"classbox-data": "/in"}, client.RunnerImage, test+".test", "-test.v")
 	if err != nil {
 		return err
 	}
@@ -128,10 +158,10 @@ func RunTest(ctx context.Context, test string, run *models.Run) error {
 	return nil
 }
 
-func RunPerf(ctx context.Context, name string) (uint64, error) {
-	r, _ := Run(ctx, map[string]string{"classbox-data": "/in"},
+func (client *Client) RunPerf(ctx context.Context, name string) (uint64, error) {
+	r, _ := client.run(ctx, map[string]string{"classbox-data": "/in"},
 		"--security-opt", "seccomp=unconfined",
-		"stdlib-runner",
+		client.RunnerImage,
 		"perf", "stat", "-x", ";", "-r", "10",
 		name+".test", "-test.run", "Perf")
 

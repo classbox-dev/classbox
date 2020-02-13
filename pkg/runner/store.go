@@ -26,12 +26,13 @@ type Store struct {
 	tmpDir          string
 	createBaselines bool
 	artifacts       []*Artifact
+	dockerClient    *docker.Client
 }
 
 func (s *Store) Execute(ctx context.Context) error {
 
 	//noinspection GoUnhandledErrorResult
-	defer fileutils.CleanDir(s.dataDir)  // nolint
+	defer fileutils.CleanDir(s.dataDir) // nolint
 
 	//noinspection GoUnhandledErrorResult
 	defer os.RemoveAll(s.tmpDir)
@@ -61,7 +62,7 @@ func (s *Store) Execute(ctx context.Context) error {
 		_ = os.Chown(testPath, 2000, 2000)
 
 		run := &models.Run{Hash: a.Hash}
-		err = docker.RunTest(ctx, a.Test, run)
+		err = s.dockerClient.RunTest(ctx, a.Test, run)
 		if err != nil {
 			log.Printf("[ERR] [%s] error during testing `%s`: %v", s.ref, a.Test, err)
 			continue
@@ -70,7 +71,7 @@ func (s *Store) Execute(ctx context.Context) error {
 		log.Printf("[INFO] [%s] `%s` unit tests: %s", s.ref, a.Test, run.Status)
 
 		if run.Status == "success" {
-			perf, err := docker.RunPerf(ctx, a.Test)
+			perf, err := s.dockerClient.RunPerf(ctx, a.Test)
 			if err != nil {
 				log.Printf("[ERR] [%s] error during perf measuring `%s`: %v", s.ref, a.Test, err)
 				continue
