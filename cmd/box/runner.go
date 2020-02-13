@@ -16,6 +16,7 @@ type RunnerCommand struct {
 	WebURL  string          `long:"web-url" env:"WEB_URL" description:"url to website" required:"true"`
 	DocsURL string          `long:"docs-url" env:"DOCS_URL" description:"url to generated docs" required:"true"`
 	Jwt     *opts.JwtClient `group:"JWT" namespace:"jwt" env-namespace:"JWT"`
+	Sentry  *opts.Sentry    `group:"Sentry" namespace:"sentry" env-namespace:"SENTRY"`
 	Debug   bool            `long:"debug" description:"show debug info" required:"false"`
 }
 
@@ -35,6 +36,7 @@ func (s *RunnerCommand) Execute(args []string) error {
 	cl := &runner.Runner{
 		Ctx:     ctx,
 		Env:     s.Env,
+		Sentry:  s.Sentry,
 		Http:    &http.Client{},
 		Jwt:     s.Jwt,
 		ApiURL:  s.ApiURL,

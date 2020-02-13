@@ -32,6 +32,7 @@ services:
       - AWS_S3_BUCKET
       - WEB_URL
       - JWT_PUBLIC_KEY
+      - SENTRY_DSN
     depends_on:
       - db
     command: ["/srv/app", "api"]
@@ -56,6 +57,7 @@ services:
       - ENV_TYPE
       - DOCS_URL
       - WEB_URL
+      - SENTRY_DSN
     depends_on:
       - api
     command: ["/srv/app", "web"]
@@ -87,6 +89,7 @@ services:
       - JWT_PRIVATE_KEY
       - DOCS_URL
       - WEB_URL
+      - SENTRY_DSN
     depends_on:
       - api
     volumes:

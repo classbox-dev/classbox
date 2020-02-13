@@ -12,7 +12,7 @@ func (web *Web) GetSignin(w http.ResponseWriter, r *http.Request) {
 	default:
 		url, err := web.API.GetOauthUrl(r.Context())
 		if err != nil {
-			web.handleSigninError(w, err)
+			web.handleSigninError(w, r, err)
 			return
 		}
 		http.Redirect(w, r, url, http.StatusFound)
@@ -23,7 +23,7 @@ func (web *Web) GetSignin(w http.ResponseWriter, r *http.Request) {
 		state := r.URL.Query().Get("state")
 		stage, err := web.API.CreateUser(r.Context(), code, state)
 		if err != nil {
-			web.handleSigninError(w, err)
+			web.handleSigninError(w, r, err)
 			return
 		}
 		stage.SetAuthCookie(w)
@@ -33,14 +33,14 @@ func (web *Web) GetSignin(w http.ResponseWriter, r *http.Request) {
 	case "install":
 		instId, err := strconv.ParseUint(r.URL.Query().Get("installation_id"), 10, 64)
 		if err != nil {
-			web.handleSigninError(w, err)
+			web.handleSigninError(w, r, err)
 			return
 		}
 		state := r.URL.Query().Get("state")
 
 		stage, err := web.API.InstallApp(r.Context(), instId, state)
 		if err != nil {
-			web.handleSigninError(w, err)
+			web.handleSigninError(w, r, err)
 			return
 		}
 		stage.SetAuthCookie(w)
@@ -50,24 +50,24 @@ func (web *Web) GetSignin(w http.ResponseWriter, r *http.Request) {
 	case "honor_code":
 		tpl, err := web.Templates.New("honor_code")
 		if err != nil {
-			web.handleSigninError(w, err)
+			web.handleSigninError(w, r, err)
 			return
 		}
 		if err := web.Render(w, tpl, nil); err != nil {
-			web.handleSigninError(w, err)
+			web.handleSigninError(w, r, err)
 			return
 		}
 	}
 }
 
-func (web *Web) handleSigninError(w http.ResponseWriter, e error) {
+func (web *Web) handleSigninError(w http.ResponseWriter, r *http.Request, e error) {
 	tpl, err := web.Templates.New("signin_error")
 	if err != nil {
-		web.HandleError(w, err)
+		web.HandleError(w, r, err)
 		return
 	}
 	if err := web.Render(w, tpl, e.Error()); err != nil {
-		web.HandleError(w, err)
+		web.HandleError(w, r, err)
 		return
 	}
 }

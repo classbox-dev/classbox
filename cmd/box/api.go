@@ -16,6 +16,7 @@ type APICommand struct {
 	Github *opts.Github    `group:"github" namespace:"github" env-namespace:"GITHUB"`
 	AWS    *opts.AWS       `group:"AWS" namespace:"aws" env-namespace:"AWS"`
 	Jwt    *opts.JwtServer `group:"JWT" namespace:"jwt" env-namespace:"JWT"`
+	Sentry *opts.Sentry    `group:"Sentry" namespace:"sentry" env-namespace:"SENTRY"`
 }
 
 // Execute is the entry point for "api" command, called by flag parser
@@ -27,8 +28,9 @@ func (s *APICommand) Execute(args []string) error {
 	log.Print("[INFO] connected to DB")
 
 	server := api.Server{
-		Addr: s.Addr,
-		Env:  s.Env,
+		Addr:   s.Addr,
+		Env:    s.Env,
+		Sentry: s.Sentry,
 		API: api.API{
 			DB:          db,
 			OAuth:       s.Github.OAuth.Config(),

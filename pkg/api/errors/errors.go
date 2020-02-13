@@ -1,11 +1,14 @@
 package errors
 
 import (
+	"github.com/getsentry/sentry-go"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/render"
 )
+
+const systemErrorText = `Unexpected system error. Developers have been alerted and will handle the issue as soon as possible.`
 
 type APIError struct {
 	Err  error
@@ -34,8 +37,11 @@ func Handle(w http.ResponseWriter, r *http.Request, err error) {
 		render.Status(r, v.Code)
 		render.JSON(w, r, v.JSON())
 	default:
+		if hub := sentry.GetHubFromContext(r.Context()); hub != nil {
+			hub.CaptureException(err)
+		}
 		log.Printf("[ERR] %v", err)
-		e := New(err, http.StatusInternalServerError, "system error")
+		e := New(err, http.StatusInternalServerError, systemErrorText)
 		render.Status(r, e.Code)
 		render.JSON(w, r, e.JSON())
 	}

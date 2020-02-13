@@ -23,6 +23,7 @@ type Runner struct {
 	Http    *http.Client
 	Env     *opts.Env
 	Jwt     *opts.JwtClient
+	Sentry  *opts.Sentry
 	DataDir string
 	ApiURL  string
 	WebURL  string

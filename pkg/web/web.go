@@ -1,14 +1,14 @@
 package web
 
 import (
+	sentryhttp "github.com/getsentry/sentry-go/http"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/mkuznets/classbox/pkg/api/client"
 	"github.com/mkuznets/classbox/pkg/opts"
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
 )
 
 type Web struct {
@@ -19,10 +19,11 @@ type Web struct {
 }
 
 type Server struct {
-	Addr string
-	Env  *opts.Env
-	Port int
-	Web  *Web
+	Addr   string
+	Sentry *opts.Sentry
+	Env    *opts.Env
+	Port   int
+	Web    *Web
 }
 
 func (s *Server) Start() {
@@ -32,6 +33,14 @@ func (s *Server) Start() {
 
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(10 * time.Second))
+
+	if s.Sentry.Init(s.Env.Type, "web") {
+		sentryMiddleware := sentryhttp.New(sentryhttp.Options{
+			Repanic: true,
+			Timeout: 10 * time.Second,
+		})
+		router.Use(sentryMiddleware.Handle)
+	}
 
 	router.Route("/", func(r chi.Router) {
 		r.With(sessionAuth(s.Web.API.GetUser)).Get("/", s.Web.GetIndex)

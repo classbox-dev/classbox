@@ -13,7 +13,7 @@ func Tx(ctx context.Context, pool *pgxpool.Pool, op func(tx pgx.Tx) error) error
 		return errors.Wrap(err, "could not start transaction")
 	}
 	//noinspection GoUnhandledErrorResult
-	defer tx.Rollback(ctx)  // nolint
+	defer tx.Rollback(ctx) // nolint
 
 	err = op(tx)
 	if err != nil {
@@ -33,11 +33,11 @@ func IterRows(rows pgx.Rows, op func(rows pgx.Rows) error) error {
 	for rows.Next() {
 		err := op(rows)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	}
 	if err := rows.Err(); err != nil {
-		return errors.Wrap(err, "failed reading rows")
+		return errors.Wrap(err, "could not read rows")
 	}
 	return nil
 }

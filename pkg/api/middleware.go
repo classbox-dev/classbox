@@ -74,7 +74,7 @@ func jwtValidator(keyFunc func(token *jwt.Token) (interface{}, error)) func(next
 				E.SendError(w, r, err, http.StatusUnauthorized, "invalid token: "+err.Error())
 				return
 			}
-			delta1 := time.Unix(claims.ExpiresAt, 0).Sub(time.Now())
+			delta1 := time.Until(time.Unix(claims.ExpiresAt, 0))
 			delta2 := time.Duration(claims.ExpiresAt-claims.IssuedAt) * time.Second
 			if delta1 > expirationLimit || delta2 > expirationLimit {
 				E.SendError(w, r, nil, http.StatusUnauthorized, "expiration time cannot exceed 5 minutes")

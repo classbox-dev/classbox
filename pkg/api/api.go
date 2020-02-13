@@ -1,15 +1,15 @@
 package api
 
 import (
+	sentryhttp "github.com/getsentry/sentry-go/http"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/mkuznets/classbox/pkg/opts"
 	"golang.org/x/oauth2"
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
 )
 
 // API is a collection of endpoints
@@ -25,10 +25,11 @@ type API struct {
 
 // Server is a
 type Server struct {
-	Addr string
-	Env  *opts.Env
-	Port int
-	API  API
+	Addr   string
+	Sentry *opts.Sentry
+	Env    *opts.Env
+	Port   int
+	API    API
 }
 
 // Start initialises the server
@@ -36,9 +37,16 @@ func (s *Server) Start() {
 	log.Printf("[INFO] environment: %s", s.Env.Type)
 
 	router := chi.NewRouter()
-
-	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(30 * time.Second))
+	router.Use(middleware.Recoverer)
+
+	if s.Sentry.Init(s.Env.Type, "api") {
+		sentryMiddleware := sentryhttp.New(sentryhttp.Options{
+			Repanic: true,
+			Timeout: 10 * time.Second,
+		})
+		router.Use(sentryMiddleware.Handle)
+	}
 
 	router.Route("/", func(r chi.Router) {
 
@@ -75,8 +83,7 @@ func (s *Server) Start() {
 		})
 	})
 
-	err := http.ListenAndServe(s.Addr, router)
-	if err != nil {
+	if err := http.ListenAndServe(s.Addr, router); err != nil {
 		log.Printf("[WARN] server has terminated: %s", err)
 	}
 }

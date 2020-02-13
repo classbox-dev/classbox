@@ -19,7 +19,7 @@ func (api *API) GetTests(w http.ResponseWriter, r *http.Request) {
 	SELECT name, description, topic, score FROM tests WHERE is_deleted='f' ORDER BY name
 	`)
 	if err != nil {
-		E.Handle(w, r, err)
+		E.Handle(w, r, errors.WithStack(err))
 		return
 	}
 
@@ -33,7 +33,6 @@ func (api *API) GetTests(w http.ResponseWriter, r *http.Request) {
 		tests = append(tests, &t)
 		return nil
 	})
-
 	if err != nil {
 		E.Handle(w, r, err)
 		return
