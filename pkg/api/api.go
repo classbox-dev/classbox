@@ -34,7 +34,9 @@ type Server struct {
 func (s *Server) Start() {
 	router := chi.NewRouter()
 
+	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(30 * time.Second))
+
 
 	router.Route("/", func(r chi.Router) {
 

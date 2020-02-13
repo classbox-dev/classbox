@@ -26,9 +26,7 @@ type Server struct {
 func (s *Server) Start() {
 	router := chi.NewRouter()
 
-	// Set a timeout value on the request context (ctx), that will signal
-	// through ctx.Done() that the request has timed out and further
-	// processing should be stopped.
+	router.Use(middleware.Recoverer)
 	router.Use(middleware.Timeout(10 * time.Second))
 
 	router.Route("/", func(r chi.Router) {
