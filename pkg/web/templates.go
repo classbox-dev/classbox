@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/rakyll/statik/fs"
 	"html/template"
 	"io/ioutil"
@@ -17,19 +18,19 @@ type Templates struct {
 func NewTemplates() (*Templates, error) {
 	f, err := fs.New()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	tpl := &Templates{fs: f}
 
 	src, err := tpl.readFile("/templates/index.html")
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	tpl.base, err = template.New("html").Parse(src)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	customFuncs := template.FuncMap{
@@ -80,13 +81,13 @@ func (t *Templates) readFile(filename string) (string, error) {
 	// Access individual files by their paths.
 	r, err := t.fs.Open(filename)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	//noinspection GoUnhandledErrorResult
 	defer r.Close()
 	contents, err := ioutil.ReadAll(r)
 	if err != nil {
-		return "", err
+		return "", errors.WithStack(err)
 	}
 	return string(contents), nil
 }
@@ -94,15 +95,15 @@ func (t *Templates) readFile(filename string) (string, error) {
 func (t *Templates) New(name string) (*template.Template, error) {
 	tpl, err := t.base.Clone()
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	md, err := t.readFile(fmt.Sprintf("/templates/%s.md", name))
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	_, err = tpl.New("markdown").Parse(md)
 	if err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 	return tpl, nil
 }
