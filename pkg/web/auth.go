@@ -10,7 +10,7 @@ func (web *Web) GetSignin(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Query().Get("step") {
 
 	default:
-		url, err := web.API.GetAppUrl(r.Context())
+		url, err := web.API(r).GetAppUrl(r.Context())
 		if err != nil {
 			web.handleSigninError(w, r, err)
 			return
@@ -21,7 +21,7 @@ func (web *Web) GetSignin(w http.ResponseWriter, r *http.Request) {
 	case "signin":
 		code := r.URL.Query().Get("code")
 		state := r.URL.Query().Get("state")
-		stage, err := web.API.Signin(r.Context(), code, state)
+		stage, err := web.API(r).Signin(r.Context(), code, state)
 		if err != nil {
 			web.handleSigninError(w, r, err)
 			return
@@ -33,7 +33,7 @@ func (web *Web) GetSignin(w http.ResponseWriter, r *http.Request) {
 	case "create":
 		code := r.URL.Query().Get("code")
 		state := r.URL.Query().Get("state")
-		stage, err := web.API.CreateUser(r.Context(), code, state)
+		stage, err := web.API(r).CreateUser(r.Context(), code, state)
 		if err != nil {
 			web.handleSigninError(w, r, err)
 			return
@@ -50,7 +50,7 @@ func (web *Web) GetSignin(w http.ResponseWriter, r *http.Request) {
 		}
 		state := r.URL.Query().Get("state")
 
-		stage, err := web.API.InstallApp(r.Context(), instId, state)
+		stage, err := web.API(r).InstallApp(r.Context(), instId, state)
 		if err != nil {
 			web.handleSigninError(w, r, err)
 			return

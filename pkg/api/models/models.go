@@ -11,6 +11,7 @@ type Test struct {
 	Description string `json:"description"`
 	Topic       string `json:"topic"`
 	Score       uint64 `json:"score"`
+	Passed      bool   `json:"is_passed,omitempty"`
 }
 
 type Stage struct {
@@ -89,17 +90,16 @@ func (t *Task) ReportSystemError(test string) {
 	})
 }
 
-type UserStat struct {
+type Stat struct {
 	Login string `json:"login"`
 	Score uint   `json:"score"`
 	Count uint   `json:"count"`
 }
 
-type UserEvent []*struct {
-	Name    string `json:"name"`
-	Updated string `json:"updated_at"`
-	Status  string `json:"status"`
-	Perf    uint   `json:"perf"`
+type UserStats struct {
+	Tests []*Test `json:"tests"`
+	Score uint64  `json:"score"`
+	Total uint64  `json:"total"`
 }
 
 type Course struct {
@@ -134,6 +134,7 @@ func (as *AuthStage) SetAuthCookie(w http.ResponseWriter) {
 }
 
 type User struct {
+	Id    uint64 `json:"id"`
 	Login string `json:"login"`
 	Repo  string `json:"repo"`
 }

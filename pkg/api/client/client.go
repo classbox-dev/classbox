@@ -16,6 +16,7 @@ type Client struct {
 	baseUrl string
 	http    *http.Client
 	token   *oauth2.Token
+	session string
 }
 
 func New(baseUrl string) *Client {
@@ -54,6 +55,9 @@ func (c *Client) createRequest(ctx context.Context, method string, path string, 
 	if c.token != nil {
 		c.token.SetAuthHeader(req)
 	}
+	if c.session != "" {
+		req.Header.Set("X-Session", c.session)
+	}
 	return req, nil
 }
 
@@ -83,6 +87,10 @@ func (c *Client) request(ctx context.Context, method string, path string, body [
 		return errors.WithStack(err)
 	}
 	return c.makeRequest(ctx, req, v)
+}
+
+func (c *Client) SessionAuth(session string) {
+	c.session = session
 }
 
 func (c *Client) Auth(token *oauth2.Token) {
@@ -168,8 +176,8 @@ func (c *Client) GetAppUrl(ctx context.Context) (string, error) {
 	return resp.Url, nil
 }
 
-func (c *Client) GetUserStats(ctx context.Context) ([]*models.UserStat, error) {
-	var resp []*models.UserStat
+func (c *Client) GetStats(ctx context.Context) ([]*models.Stat, error) {
+	var resp []*models.Stat
 	if err := c.request(ctx, "GET", "/stats", nil, &resp); err != nil {
 		return nil, err
 	}
@@ -225,23 +233,23 @@ func (c *Client) GetCourse(ctx context.Context) (*models.Course, error) {
 	return &course, nil
 }
 
-func (c *Client) GetUser(ctx context.Context, session string) (*models.User, error) {
-	if session == "" {
-		return nil, nil
-	}
+func (c *Client) GetUser(ctx context.Context) (*models.User, error) {
 	var user models.User
-	req, err := c.createRequest(ctx, "GET", "/user", nil)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	req.Header.Add("X-Session", session)
-	if err := c.makeRequest(ctx, req, &user); err != nil {
+	if err := c.request(ctx, "GET", "/user", nil, &user); err != nil {
 		if e, ok := err.(*ErrorResponse); ok && e.Code == http.StatusUnauthorized {
 			return nil, nil
 		}
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (c *Client) GetUserStats(ctx context.Context) (*models.UserStats, error) {
+	var stats models.UserStats
+	if err := c.request(ctx, "GET", "/user/stats", nil, &stats); err != nil {
+		return nil, err
+	}
+	return &stats, nil
 }
 
 func (c *Client) UpdateCourse(ctx context.Context, ready bool) error {

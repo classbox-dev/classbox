@@ -2,12 +2,16 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	E "github.com/mkuznets/classbox/pkg/api/errors"
+	"github.com/mkuznets/classbox/pkg/api/models"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
@@ -81,6 +85,34 @@ func jwtValidator(keyFunc func(token *jwt.Token) (interface{}, error)) func(next
 				return
 			}
 			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func userAuth(db *pgxpool.Pool) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			session := r.Header.Get("X-Session")
+			if session == "" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			var user models.User
+			err := db.QueryRow(r.Context(), `
+			SELECT u.id, u.login, u.repository_name
+			FROM users as u JOIN sessions as s ON (s.user_id=u.id)
+			WHERE session=$1 LIMIT 1
+			`, session).Scan(&user.Id, &user.Login, &user.Repo)
+			switch {
+			case err == pgx.ErrNoRows:
+				next.ServeHTTP(w, r)
+				return
+			case err != nil:
+				E.Handle(w, r, err)
+				return
+			}
+			ctx := context.WithValue(r.Context(), "User", &user)
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }

@@ -2,19 +2,15 @@ package web
 
 import (
 	"context"
-	"github.com/mkuznets/classbox/pkg/api/models"
+	"github.com/mkuznets/classbox/pkg/api/client"
 	"net/http"
 )
 
-func sessionAuth(UserBySession func(ctx context.Context, session string) (*models.User, error)) func(next http.Handler) http.Handler {
+func sessionAuth(API func(r *http.Request) *client.Client) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			session, err := r.Cookie("session")
-			if err != nil {
-				next.ServeHTTP(w, r)
-				return
-			}
-			user, err := UserBySession(r.Context(), session.Value)
+			api := API(r)
+			user, err := api.GetUser(r.Context())
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/mkuznets/classbox/pkg/api/client"
 	"github.com/mkuznets/classbox/pkg/opts"
 	_ "github.com/mkuznets/classbox/pkg/statik"
 	"github.com/mkuznets/classbox/pkg/web"
@@ -30,10 +29,10 @@ func (s *WebCommand) Execute(args []string) error {
 		Addr:   s.Addr,
 		Sentry: s.Sentry,
 		Web: &web.Web{
-			API:       client.New(s.ApiURL),
 			Templates: ts,
 			DocsURL:   s.DocsURL,
 			WebURL:    s.WebURL,
+			ApiURL:    s.ApiURL,
 		},
 	}
 	server.Start()

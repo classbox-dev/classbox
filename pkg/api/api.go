@@ -60,13 +60,16 @@ func (s *Server) Start() {
 		})
 		r.Get("/commits/{login}:{commitHash:[0-9a-z]+}", s.API.GetCommit)
 		r.Get("/tests", s.API.GetTests)
-		r.Get("/user", s.API.GetUser)
+		r.With(userAuth(s.API.DB)).Group(func(r chi.Router) {
+			r.Get("/user", s.API.GetUser)
+			r.Get("/user/stats", s.API.GetUserStats)
+		})
 
 		// webhook endpoint
 		r.With(hookValidator(s.API.App.HookSecret)).Post("/tasks/enqueue", s.API.EnqueueTask)
 
 		// private runner's endpoints
-		r.With(jwtValidator(s.API.Jwt.Key)).Route("/", func(r chi.Router) {
+		r.With(jwtValidator(s.API.Jwt.Key)).Group(func(r chi.Router) {
 			r.Route("/course", func(r chi.Router) {
 				r.Get("/", s.API.GetCourse)
 				r.Put("/", s.API.UpdateCourse)

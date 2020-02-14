@@ -11,13 +11,6 @@ import (
 	"time"
 )
 
-type Web struct {
-	API       *client.Client
-	DocsURL   string
-	WebURL    string
-	Templates *Templates
-}
-
 type Server struct {
 	Addr   string
 	Sentry *opts.Sentry
@@ -43,12 +36,14 @@ func (s *Server) Start() {
 	}
 
 	router.Route("/", func(r chi.Router) {
-		r.With(sessionAuth(s.Web.API.GetUser)).Route("/", func(r chi.Router) {
+		r.With(sessionAuth(s.Web.API)).Route("/", func(r chi.Router) {
 			r.Get("/", s.Web.GetIndex)
 			r.Get("/scoreboard", s.Web.GetScoreboard)
 			r.Get("/commit/{login}:{commitHash:[0-9a-z]+}", s.Web.GetCommit)
 		})
 		r.Get("/signin", s.Web.GetSignin)
+		r.Get("/quickstart", s.Web.GetQuickstart)
+		r.Get("/prerequisites", s.Web.GetPrerequisites)
 		r.Get("/logout", s.Web.Logout)
 	})
 	router.NotFound(s.Web.NotFound)
@@ -57,4 +52,21 @@ func (s *Server) Start() {
 	if err != nil {
 		log.Printf("[WARN] server has terminated: %s", err)
 	}
+}
+
+type Web struct {
+	DocsURL   string
+	ApiURL    string
+	WebURL    string
+	Templates *Templates
+}
+
+func (web *Web) API(r *http.Request) *client.Client {
+	cl := client.New(web.ApiURL)
+	cookie, err := r.Cookie("session")
+	if err != nil {
+		return cl
+	}
+	cl.SessionAuth(cookie.Value)
+	return cl
 }

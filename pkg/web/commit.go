@@ -10,7 +10,7 @@ func (web *Web) GetCommit(w http.ResponseWriter, r *http.Request) {
 	commitHash := chi.URLParam(r, "commitHash")
 	login := chi.URLParam(r, "login")
 
-	commit, err := web.API.GetCommit(r.Context(), login, commitHash)
+	commit, err := web.API(r).GetCommit(r.Context(), login, commitHash)
 	if err != nil {
 		web.HandleError(w, r, err)
 		return

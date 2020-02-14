@@ -8,41 +8,41 @@ import (
 type indexPage struct {
 	User    *models.User
 	DocsURL string
-	Tests   []*models.Test
-	Stats   []*models.UserStat
+	Stats   *models.UserStats
 }
 
 func (web *Web) GetIndex(w http.ResponseWriter, r *http.Request) {
-
-	tests, err := web.API.GetTests(r.Context())
-	if err != nil {
-		web.HandleError(w, r, err)
-		return
-	}
-	stats, err := web.API.GetUserStats(r.Context())
-	if err != nil {
-		web.HandleError(w, r, err)
-		return
-	}
 
 	var user *models.User
 	if v, ok := r.Context().Value("User").(*models.User); ok {
 		user = v
 	}
 
-	tpl, err := web.Templates.New("index")
+	page := &indexPage{
+		User:    user,
+		DocsURL: web.DocsURL,
+	}
+
+	var tplName string
+	switch user {
+	case nil:
+		tplName = "index_landing"
+	default:
+		tplName = "index_user"
+
+		stats, err := web.API(r).GetUserStats(r.Context())
+		if err != nil {
+			web.HandleError(w, r, err)
+			return
+		}
+		page.Stats = stats
+	}
+
+	tpl, err := web.Templates.New(tplName)
 	if err != nil {
 		web.HandleError(w, r, err)
 		return
 	}
-
-	page := &indexPage{
-		User:    user,
-		DocsURL: web.DocsURL,
-		Tests:   tests,
-		Stats:   stats,
-	}
-
 	if err := web.Render(w, tpl, page); err != nil {
 		web.HandleError(w, r, err)
 		return

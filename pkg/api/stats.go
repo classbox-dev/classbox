@@ -35,10 +35,10 @@ func (api *API) GetStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var stats []*models.UserStat
+	var stats []*models.Stat
 
 	err = db.IterRows(rows, func(rows pgx.Rows) error {
-		s := models.UserStat{}
+		s := models.Stat{}
 		err := rows.Scan(&s.Login, &s.Score, &s.Count)
 		if err != nil {
 			return errors.WithStack(err)

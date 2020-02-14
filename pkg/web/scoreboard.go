@@ -7,11 +7,11 @@ import (
 
 type scoreboardPage struct {
 	User  *models.User
-	Stats []*models.UserStat
+	Stats []*models.Stat
 }
 
 func (web *Web) GetScoreboard(w http.ResponseWriter, r *http.Request) {
-	stats, err := web.API.GetUserStats(r.Context())
+	stats, err := web.API(r).GetStats(r.Context())
 	if err != nil {
 		web.HandleError(w, r, err)
 		return
