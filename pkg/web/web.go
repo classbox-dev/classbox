@@ -43,10 +43,13 @@ func (s *Server) Start() {
 	}
 
 	router.Route("/", func(r chi.Router) {
-		r.With(sessionAuth(s.Web.API.GetUser)).Get("/", s.Web.GetIndex)
+		r.With(sessionAuth(s.Web.API.GetUser)).Route("/", func(r chi.Router) {
+			r.Get("/", s.Web.GetIndex)
+			r.Get("/scoreboard", s.Web.GetScoreboard)
+			r.Get("/commit/{login}:{commitHash:[0-9a-z]+}", s.Web.GetCommit)
+		})
 		r.Get("/signin", s.Web.GetSignin)
 		r.Get("/logout", s.Web.Logout)
-		r.Get("/commit/{login}:{commitHash:[0-9a-z]+}", s.Web.GetCommit)
 	})
 	router.NotFound(s.Web.NotFound)
 
