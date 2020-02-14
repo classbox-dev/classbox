@@ -152,7 +152,7 @@ func (api *API) DequeueTask(w http.ResponseWriter, r *http.Request) {
 		err = api.DB.QueryRow(r.Context(), `
 		SELECT u.login, c.commit, u.repository_name, u.installation_id, c.check_run_id
 		FROM commits AS c JOIN users as u ON(u.id=c.user_id)
-		WHERE c.id=$1 LIMIT 1
+		WHERE c.id=$1 AND u.installation_id IS NOT NULL LIMIT 1
 		;`, commitID).Scan(&login, &commitHash, &repoName, &instID, &checkRunId)
 
 		switch {
