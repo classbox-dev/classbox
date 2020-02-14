@@ -94,10 +94,13 @@ CREATE TABLE IF NOT EXISTS checks
     test_id   bigint REFERENCES tests (id) DEFAULT NULL,
     name      text           NOT NULL,
     status    check_status_t NOT NULL,
-    output    text           NOT NULL
+    output    text           NOT NULL,
+    run_id    bigint REFERENCES runs (id)  DEFAULT NULL,
+    is_cached boolean                      DEFAULT FALSE
 );
 CREATE INDEX checks__commit_id ON checks (commit_id);
 CREATE INDEX checks__test_id ON checks (test_id) WHERE test_id IS NOT NULL;
+CREATE INDEX checks__run_id ON checks (run_id) WHERE run_id IS NOT NULL;
 
 -- -----------------------------------------------------------------------------
 
@@ -131,4 +134,5 @@ CREATE TABLE IF NOT EXISTS courses
     is_ready   boolean              DEFAULT FALSE
 );
 
-INSERT INTO courses (name) VALUES ('stdlib');
+INSERT INTO courses (name)
+VALUES ('stdlib');

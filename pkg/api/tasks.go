@@ -222,6 +222,7 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 
 	var (
 		commitId    uint64
+		commitHash  string
 		isChecked   bool
 		checkRun    github.CheckRun
 		login, repo string
@@ -229,13 +230,13 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 	)
 
 	err := api.DB.QueryRow(r.Context(), `
-	SELECT c.id, c.is_checked, c.check_run_id, u.login, u.repository_name, u.installation_id
+	SELECT c.id, c.commit, c.is_checked, c.check_run_id, u.login, u.repository_name, u.installation_id
 	FROM
 		commits AS c
 		JOIN tasks AS t ON(c.id=t.commit_id)
 		JOIN users AS u ON (u.id=c.user_id)
 	WHERE t.id=$1 LIMIT 1
-	;`, taskID).Scan(&commitId, &isChecked, &checkRun.ID, &login, &repo, &instId)
+	;`, taskID).Scan(&commitId, &commitHash, &isChecked, &checkRun.ID, &login, &repo, &instId)
 	switch {
 	case err == pgx.ErrNoRows:
 		e := fmt.Errorf("unknown task: %v", taskID)
@@ -266,9 +267,18 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	runIds, err := api.getRunIds(r.Context(), stages)
+	if err != nil {
+		E.Handle(w, r, err)
+		return
+	}
+
 	var crows [][]interface{}
 	for _, stage := range stages {
-		var testID *uint64
+		var (
+			testID *uint64
+			runID  *uint64
+		)
 		if stage.Test != "" {
 			if v, ok := testIds[stage.Test]; ok {
 				testID = &v
@@ -276,11 +286,16 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 		}
-		crows = append(crows, []interface{}{commitId, testID, stage.Name, stage.Status, stage.Output})
+		if stage.Run != nil {
+			if v, ok := runIds[stage.Run.Hash]; ok {
+				runID = &v
+			}
+		}
+		crows = append(crows, []interface{}{commitId, testID, runID, stage.Cached, stage.Name, stage.Status, stage.Output})
 	}
 
 	title := ""
-	failures := []string{}
+	failures := make([]string, 0)
 	for _, s := range stages {
 		if s.Status != "success" {
 			failures = append(failures, s.Name)
@@ -296,20 +311,24 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 		title = "Success"
 	}
 
+	page := struct {
+		Stages []*models.Stage
+		Url    string
+	}{stages, fmt.Sprintf("%s/commit/%s:%s", api.WebUrl, login, commitHash)}
+
 	ts, err := web.NewTemplates()
 	if err != nil {
-		E.Handle(w, r, err)
+		E.Handle(w, r, errors.WithStack(err))
 		return
 	}
-
 	tpl, err := ts.New("check_run")
 	if err != nil {
-		E.Handle(w, r, err)
+		E.Handle(w, r, errors.WithStack(err))
 		return
 	}
 	summary := bytes.NewBufferString("")
-	if err := tpl.ExecuteTemplate(summary, "markdown", stages); err != nil {
-		E.Handle(w, r, err)
+	if err := tpl.ExecuteTemplate(summary, "markdown", page); err != nil {
+		E.Handle(w, r, errors.WithStack(err))
 		return
 	}
 	checkRun.Output = &github.CheckRunOutput{
@@ -319,7 +338,7 @@ func (api *API) FinishTask(w http.ResponseWriter, r *http.Request) {
 
 	err = db.Tx(r.Context(), api.DB, func(tx pgx.Tx) error {
 
-		cols := []string{"commit_id", "test_id", "name", "status", "output"}
+		cols := []string{"commit_id", "test_id", "run_id", "is_cached", "name", "status", "output"}
 		cfr := pgx.CopyFromRows(crows)
 		_, err = tx.CopyFrom(r.Context(), pgx.Identifier{"checks"}, cols, cfr)
 		if err != nil {

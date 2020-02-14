@@ -14,10 +14,12 @@ type Test struct {
 }
 
 type Stage struct {
-	Name   string `json:"name"`
-	Status string `json:"status"`
-	Test   string `json:"test,omitempty"`
-	Output string `json:"output,omitempty"`
+	Name   string   `json:"name"`
+	Status string   `json:"status"`
+	Test   string   `json:"test,omitempty"`
+	Output string   `json:"output,omitempty"`
+	Run    *RunHash `json:"run,omitempty"`
+	Cached bool     `json:"is_cached,omitempty"`
 }
 
 func (s *Stage) FillFromRun(stageName string, run *Run) {
@@ -46,6 +48,10 @@ type Run struct {
 	Score    uint64 `json:"score"`
 	Test     string `json:"test"`
 	Baseline bool   `json:"baseline"`
+}
+
+type RunHash struct {
+	Hash string `json:"hash"`
 }
 
 func (r *Run) CompareToBaseline(b *Run) {

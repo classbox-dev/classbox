@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"fmt"
 	"github.com/mkuznets/classbox/pkg/api/models"
 	"github.com/mkuznets/classbox/pkg/fileutils"
 	"github.com/pkg/errors"
@@ -38,6 +39,25 @@ func (rr *Runner) runTask(task *models.Task) error {
 		return errors.WithStack(err)
 	}
 
+	// determine cached builds
+	builds := make(map[string]*models.Stage)
+	for _, s := range task.Stages {
+		var test string
+		n, err := fmt.Sscanf(s.Name, "build::%s", &test)
+		if err == nil && n == 1 {
+			builds[test] = s
+		}
+	}
+	for _, a := range store.artifacts {
+		st, ok := builds[a.Test]
+		if !ok {
+			continue
+		}
+		if a.Cache != nil {
+			st.Cached = true
+		}
+	}
+
 	log.Printf("[INFO] [%s] tests found: %d", task.Ref, len(store.artifacts))
 	err = store.Execute(rr.Ctx)
 	if err != nil {
@@ -51,7 +71,10 @@ func (rr *Runner) runTask(task *models.Task) error {
 			continue
 		}
 		task.Runs = append(task.Runs, a.Run)
-		stage := &models.Stage{}
+		stage := &models.Stage{
+			Cached: a.Cache != nil,
+			Run:    &models.RunHash{a.Run.Hash},
+		}
 		stage.FillFromRun("test", a.Run)
 		task.Stages = append(task.Stages, stage)
 	}
