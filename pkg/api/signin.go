@@ -165,6 +165,7 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	var (
 		userId    uint64
+		instId    *uint64
 		honorCode bool
 	)
 	err = db.Tx(r.Context(), api.DB, func(tx pgx.Tx) error {
@@ -177,8 +178,8 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 			repository_id=EXCLUDED.repository_id,
 			repository_name=EXCLUDED.repository_name,
 			login=EXCLUDED.login
-		RETURNING id, honor_code
-		`, user.ID, user.Login, user.Email, repo.ID, repo.Name).Scan(&userId, &honorCode)
+		RETURNING id, honor_code, installation_id
+		`, user.ID, user.Login, user.Email, repo.ID, repo.Name).Scan(&userId, &honorCode, &instId)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -246,6 +247,18 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 		E.Handle(w, r, errors.Wrap(err, "could not check installation"))
 		return
 	}
+
+	err = db.Tx(r.Context(), api.DB, func(tx pgx.Tx) error {
+		_, err = tx.Exec(r.Context(), `
+		UPDATE "users" SET installation_id=$1 WHERE "id"=$2`, inst.ID, userId)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		return nil
+	})
 
 	if err := app.AuthAsInstallation(r.Context(), inst.ID); err != nil {
 		E.Handle(w, r, errors.Wrap(err, "could not auth as installation"))
