@@ -145,7 +145,10 @@ func (client *Client) BuildMeta(ctx context.Context) ([]*models.Test, error) {
 }
 
 func (client *Client) RunTest(ctx context.Context, test string, run *models.Run) error {
-	r, err := client.run(ctx, map[string]string{"classbox-data": "/in"}, client.RunnerImage, test+".test", "-test.v")
+	r, err := client.run(ctx, map[string]string{"classbox-data": "/in"},
+		"-e", "TIMEOUT=5", client.RunnerImage,
+		test+".test", "-test.v", "-test.run", "Unit",
+	)
 	if err != nil {
 		return err
 	}
@@ -161,9 +164,11 @@ func (client *Client) RunTest(ctx context.Context, test string, run *models.Run)
 func (client *Client) RunPerf(ctx context.Context, name string) (uint64, error) {
 	r, _ := client.run(ctx, map[string]string{"classbox-data": "/in"},
 		"--security-opt", "seccomp=unconfined",
+		"-e", "TIMEOUT=20",
 		client.RunnerImage,
-		"perf", "stat", "-x", ";", "-r", "10",
-		name+".test", "-test.run", "Perf")
+		"perf", "stat", "-x", ";", "-r", "5",
+		name+".test", "-test.run", "Perf",
+	)
 
 	var perf uint64
 	for _, line := range strings.Split(string(r.Output), "\n") {
