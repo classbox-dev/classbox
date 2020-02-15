@@ -1,9 +1,9 @@
 {{define "title"}}Prerequisites @ hsecode{{end -}}
 # Prerequisites
 
-Why, sure, of course you can write and submit code using that silly editor on Github. However, *efficient* programming requires some proper development tools.
+Why, sure, you *can* write and submit code using that silly editor on GitHub. However, *efficient* programming requires some proper development tools.
 
-**Note for Windows users:** (tl;dr do not use WSL.) As with most open-source tools, Go is much better supported on Unix-like systems. This may tempt you to use [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/about) (WSL), which is basically a fully-fledged Ubuntu distribution inside a running Windows. However, it is still somewhat hard to integrate the Windows-world (filesystem and graphical IDE) with the WSL-world. Unless you want to write your code in Vim or deal with all sorts of weird hacks, I do not recommend using WSL (yet). This tutorial goes on with installing Windows-native tools. As far as I can tell, for the purposes of this course they work just fine.
+**Note for Windows users:** (tl;dr do not use WSL.) As with most open-source tools, Go is much better supported on Unix-like systems. This may tempt you to use [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/about) (WSL), which is a fully-fledged Ubuntu distribution inside a running Windows. However, it is still somewhat hard to integrate the Windows-world (filesystem and graphical IDE) with the WSL-world. Unless you want to write your code in Vim or deal with all sorts of weird hacks, I do not recommend using WSL (yet). This tutorial goes on with installing Windows-native tools. As far as I can tell, for this course they work just fine.
 
 ## Install Go
 
@@ -61,9 +61,9 @@ I strongly recommend using git as a command-line tool, **not** as a GUI app (suc
 
 ## (optional) Setup SSH Keys
 
-Your working repository is private. If you clone it via HTTPS (`git clone https://...`), you will have to enter your GitHub login and password on for each operation. It is rather annoying. Instead I recommend cloning via SSH (`git clone git@github.com:...`). It requires setting up a pair of SSH keys: for your computer (private key) and the repository (public key). Once you do that, you will not have to supply passwords for git ever again.
+Your working repository is private. If you clone it via HTTPS (`git clone https://...`), you will have to enter your GitHub login and password on for each operation. It is rather annoying. Instead, I recommend cloning via SSH (`git clone git@github.com:...`). It requires setting up a pair of SSH keys: for your computer (private key) and the repository (public key). Once you do that, you will not have to supply passwords for git ever again.
 
-Follow the [instruction on Github](https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh), these articles in particular:
+Follow the [instruction on GitHub](https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh), these articles in particular:
 
 * [Generating a new SSH key and adding it to the ssh-agent](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
 * [Adding a new SSH key to your GitHub account](https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account)
@@ -87,7 +87,7 @@ usage: genny [{flags}] gen "{types}"
 
 ## (optional) Install pre-commit
 
-[pre-commit](https://pre-commit.com) is a tool that performs predefined checks on your code before every commit. In some cases it will not let you commit before you fix certain issues.
+[pre-commit](https://pre-commit.com) is a tool that performs predefined checks on your code before every commit. In some cases, it will not let you commit before you fix certain issues.
 
 In out case pre-commit performs the following actions:
 
@@ -96,7 +96,7 @@ In out case pre-commit performs the following actions:
 * Runs [stdlib-linter](https://github.com/mkuznets/stdlib-linter) to ensure your code meets syntactic requirements, e.g. that you only use allowed packages.
 * Ensures there are no untracked files in your repository.
 
-It is totally optional: the test system will let you know about any of these issues anyway. However, you are better off to catch such things as early as possible, without waiting for your commits to be tested.
+It is optional: the test system will let you know about any of these issues anyway. However, you are better off to catch such things as early as possible, without waiting for your commits to be tested.
 
 Follow the [installation instruction](https://pre-commit.com/#install) and make sure you can run pre-commit in a terminal:
 ```
@@ -124,14 +124,14 @@ However, I understand if you do not want to deal with another big honking produc
 
 ### Visual Studio Code
 
-[VS Code](https://code.visualstudio.com) has an [officially bad](https://github.com/Microsoft/vscode-go/wiki/Go-modules-support-in-Visual-Studio-Code) support of Go modules. Still, as far as I can tell it has *just enough* of it for this course.
+[VS Code](https://code.visualstudio.com) has [officially bad](https://github.com/Microsoft/vscode-go/wiki/Go-modules-support-in-Visual-Studio-Code) support of Go modules. Still, as far as I can tell it has *just enough* of it for this course.
 
 * [Install VS Code](https://code.visualstudio.com/Download)
 * Install Go extension, either via *File -> Preferences -> Extensions* or from the terminal:
   ```
   $ code --install-extension ms-vscode.Go
   ```
-* Open *View -> Command Palette*, type "Go: Install/Update Tools". Select all the items the press OK. It may end up with a number of failures, ignore them for now.
+* Open *View -> Command Palette*, type "Go: Install/Update Tools". Select all the items and press OK. It may end up with some failures, ignore them for now.
 * Also in *Command Palette*, select "Preferences: Open Settings (JSON)" and paste the following:
   ```json
   {
