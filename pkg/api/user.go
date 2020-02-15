@@ -27,15 +27,15 @@ func (api *API) GetUserStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := api.DB.Query(r.Context(), `
-	SELECT name, description, score, passed
-	FROM (
-		SELECT DISTINCT ON (ch.test_id) t.name, t.description, t.score, (ch.status='success') as passed
+	SELECT t.name, t.description, t.score, COALESCE(s.passed, 'f')
+	FROM tests as t LEFT JOIN (
+		SELECT DISTINCT ON (ch.test_id) ch.test_id, (ch.status='success') as passed
 		FROM checks as ch
 			JOIN commits as ci ON (ci.id=ch.commit_id)
 			JOIN tests as t ON (t.id=ch.test_id)
 		WHERE ci.user_id=$1 AND ch.test_id IS NOT NULL AND t.is_deleted='f'
 		ORDER BY ch.test_id, ch.id DESC
-	) as ts ORDER BY name;`, user.Id)
+	) as s ON(s.test_id=t.id) WHERE t.is_deleted='f' ORDER BY name;`, user.Id)
 	if err != nil {
 		E.Handle(w, r, errors.WithStack(err))
 		return
