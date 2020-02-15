@@ -55,10 +55,6 @@ func (api *API) UpdateTests(w http.ResponseWriter, r *http.Request) {
 			E.SendError(w, r, nil, http.StatusBadRequest, "test name cannot be empty")
 			return
 		}
-		if test.Score == 0 {
-			E.SendError(w, r, nil, http.StatusBadRequest, "score cannot be zero")
-			return
-		}
 	}
 
 	err := db.Tx(r.Context(), api.DB, func(tx pgx.Tx) error {

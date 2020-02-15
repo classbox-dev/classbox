@@ -65,15 +65,16 @@ func (s *Server) Start() {
 			r.Get("/user/stats", s.API.GetUserStats)
 		})
 
+		r.Route("/course", func(r chi.Router) {
+			r.With(jwtValidator(s.API.Jwt.Key)).Get("/", s.API.GetCourse)
+			r.Put("/", s.API.UpdateCourse)
+		})
+
 		// webhook endpoint
 		r.With(hookValidator(s.API.App.HookSecret)).Post("/tasks/enqueue", s.API.EnqueueTask)
 
 		// private runner's endpoints
 		r.With(jwtValidator(s.API.Jwt.Key)).Group(func(r chi.Router) {
-			r.Route("/course", func(r chi.Router) {
-				r.Get("/", s.API.GetCourse)
-				r.Put("/", s.API.UpdateCourse)
-			})
 			r.Put("/tests", s.API.UpdateTests)
 			r.Route("/runs", func(r chi.Router) {
 				r.Get("/", s.API.GetRuns)
