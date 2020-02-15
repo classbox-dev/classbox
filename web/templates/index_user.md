@@ -19,5 +19,5 @@ Your working repository: [{{ .User.Login }}/{{ .User.Repo }}](https://github.com
 | ID | Description | Score | Passed |
 |----|-------------|-------|--------|
 {{range .Stats.Tests -}}
-| `{{ .Name }}` | {{ .Description }} |  {{ .Score }} | {{if .Passed }}✅{{end}} |
+| `{{ .Name }}` | {{ .Description }} |  {{ .Score }} | {{if .Passed }}✅{{else}}⬜️{{end}} |
 {{end -}}
