@@ -61,7 +61,7 @@ func (r *Run) CompareToBaseline(b *Run) {
 	}
 	percent := r.Score * 1000 / b.Score
 	humanPercent := float64(percent) / 10.
-	r.Output = fmt.Sprintf("%.1f%% of baseline", humanPercent)
+	r.Output = fmt.Sprintf("Performance: %.1f%% of baseline", humanPercent)
 	if percent > 1200 {
 		r.Status = "failure"
 	}
