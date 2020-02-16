@@ -35,8 +35,7 @@ jobs:
           docker build . -f Dockerfile -t ${{ env.base_tag }}:${{ steps.branch.outputs.name }} --cache-from ${{ env.base_tag }}:latest --target base
           docker tag ${{ env.base_tag }}:${{ steps.branch.outputs.name }} ${{ env.base_tag }}:latest
 
-          docker pull ${{ env.runner_tag }}:latest || true
-          docker build . -f Dockerfile -t ${{ env.runner_tag }}:${{ steps.branch.outputs.name }} --cache-from ${{ env.runner_tag }}:latest --target runner
+          docker build . -f Dockerfile -t ${{ env.runner_tag }}:${{ steps.branch.outputs.name }} --cache-from ${{ env.base_tag }}:${{ steps.branch.outputs.name }} --target runner
           docker tag ${{ env.runner_tag }}:${{ steps.branch.outputs.name }} ${{ env.runner_tag }}:latest
 
       - name: docker push
