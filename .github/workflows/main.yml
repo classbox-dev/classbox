@@ -10,8 +10,8 @@ on:
       - '!sql/*'
   create:
 env:
-  base_tag: docker.pkg.github.com/mkuznets/classbox/base
-  runner_tag: docker.pkg.github.com/mkuznets/classbox/runner
+  base_tag: docker.pkg.github.com/mkuznets/classbox/classbox-base
+  runner_tag: docker.pkg.github.com/mkuznets/classbox/classbox-runner
 jobs:
   build:
     runs-on: ubuntu-18.04
