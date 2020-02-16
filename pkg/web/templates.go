@@ -7,6 +7,8 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"path"
 	"strings"
 )
 
@@ -40,6 +42,14 @@ func NewTemplates() (*Templates, error) {
 		},
 		"inc": func(v int) string {
 			return fmt.Sprintf("%v", v+1)
+		},
+		"url": func(u, p string) string {
+			up, err := url.Parse(u)
+			if err != nil {
+				return fmt.Sprintf("invalid url: %v", err)
+			}
+			up.Path = path.Join(up.Path, p)
+			return up.String()
 		},
 		"status": func(v string) string {
 			switch v {
