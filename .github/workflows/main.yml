@@ -16,26 +16,37 @@ jobs:
   build:
     runs-on: ubuntu-18.04
     steps:
+
+      - name: Extract branch name
+        id: branch
+        shell: bash
+        run: echo "##[set-output name=name;]$(echo ${GITHUB_REF##*/})"
+
       - name: checkout
         uses: actions/checkout@v2
+
       - id: build
         name: docker build
+        with:
+          tag: ${{ steps.branch.outputs.name }}
         run: |
           cd $GITHUB_WORKSPACE
           docker login -u mkuznets -p ${{ secrets.GITHUB_TOKEN }} docker.pkg.github.com
 
           docker pull ${{ env.base_tag }}:latest || true
-          docker build . -f Dockerfile -t ${{ env.base_tag }}:${{ github.ref }} --cache-from ${{ env.base_tag }}:latest --target base
-          docker tag ${{ env.base_tag }}:${{ github.ref }} ${{ env.base_tag }}:latest
+          docker build . -f Dockerfile -t ${{ env.base_tag }}:${{ INPUT_TAG }} --cache-from ${{ env.base_tag }}:latest --target base
+          docker tag ${{ env.base_tag }}:${{ INPUT_TAG }} ${{ env.base_tag }}:latest
 
           docker pull ${{ env.runner_tag }}:latest || true
-          docker build . -f Dockerfile -t ${{ env.runner_tag }}:${{ github.ref }} --cache-from ${{ env.runner_tag }}:latest --target runner
-          docker tag ${{ env.runner_tag }}:${{ github.ref }} ${{ env.runner_tag }}:latest
+          docker build . -f Dockerfile -t ${{ env.runner_tag }}:${{ INPUT_TAG }} --cache-from ${{ env.runner_tag }}:latest --target runner
+          docker tag ${{ env.runner_tag }}:${{ INPUT_TAG }} ${{ env.runner_tag }}:latest
 
       - name: docker push
+        with:
+          tag: ${{ steps.branch.outputs.name }}
         run: |
-          docker push ${{ env.base_tag }}:${{ github.ref }}
+          docker push ${{ env.base_tag }}:${{ INPUT_TAG }}
           docker push ${{ env.base_tag }}:latest
 
-          docker push ${{ env.runner_tag }}:${{ github.ref }}
+          docker push ${{ env.runner_tag }}:${{ INPUT_TAG }}
           docker push ${{ env.runner_tag }}:latest
