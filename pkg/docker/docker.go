@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/mkuznets/classbox/pkg/api/models"
 	"github.com/pkg/errors"
+	"log"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -46,6 +47,7 @@ func (client *Client) run(ctx context.Context, volumes map[string]string, args .
 	}
 	cArgs = append(cArgs, args...)
 
+	log.Printf("[INFO] docker %v %v", volumes, strings.Join(Censor(args), " "))
 	cmd := exec.CommandContext(ctx, "docker", cArgs...)
 
 	var out bytes.Buffer
@@ -146,6 +148,7 @@ func (client *Client) BuildMeta(ctx context.Context) ([]*models.Test, error) {
 
 func (client *Client) RunTest(ctx context.Context, test string, run *models.Run) error {
 	r, err := client.run(ctx, map[string]string{"classbox-data": "/in"},
+		"--network", "none",
 		"-e", "TIMEOUT=5", client.RunnerImage,
 		test+".test", "-test.v", "-test.run", "Unit",
 	)
@@ -164,6 +167,7 @@ func (client *Client) RunTest(ctx context.Context, test string, run *models.Run)
 func (client *Client) RunPerf(ctx context.Context, name string) (uint64, error) {
 	r, _ := client.run(ctx, map[string]string{"classbox-data": "/in"},
 		"--security-opt", "seccomp=unconfined",
+		"--network", "none",
 		"-e", "TIMEOUT=20",
 		client.RunnerImage,
 		"perf", "stat", "-x", ";", "-r", "5",
@@ -183,4 +187,15 @@ func (client *Client) RunPerf(ctx context.Context, name string) (uint64, error) 
 		return perf, errors.New("perf data not found")
 	}
 	return perf, nil
+}
+
+func Censor(args []string) []string {
+	cargs := make([]string, 0, len(args))
+	for _, x := range args {
+		if strings.HasPrefix(x, "https") {
+			x = "<url>"
+		}
+		cargs = append(cargs, x)
+	}
+	return cargs
 }
