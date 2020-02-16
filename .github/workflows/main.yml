@@ -5,8 +5,9 @@ on:
       - master
       - test
     paths:
-      - !*.md
-      - !sql/*
+      - '**'
+      - '!*.md'
+      - '!sql/*'
   create:
 env:
   base_tag: docker.pkg.github.com/mkuznets/classbox/base
