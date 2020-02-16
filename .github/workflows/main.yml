@@ -8,7 +8,8 @@ on:
       - '**'
       - '!*.md'
       - '!sql/*'
-  create:
+    tags:
+      - v*
 env:
   build_tag: docker.pkg.github.com/mkuznets/classbox/classbox-build
   base_tag: docker.pkg.github.com/mkuznets/classbox/classbox-base
