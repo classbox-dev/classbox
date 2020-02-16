@@ -7,7 +7,9 @@
 *.mod text eol=lf
 *.sum text eol=lf
 *.md text eol=lf
+*.svg text eol=lf
+*.html text eol=lf
 
 # Binary files: should not be modified
-# (uncomment if necessary)
-# *.exe binary
+*.png binary
+*.ico binary

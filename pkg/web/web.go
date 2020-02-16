@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/mkuznets/classbox/pkg/api/client"
 	"github.com/mkuznets/classbox/pkg/opts"
+	"github.com/rakyll/statik/fs"
 	"log"
 	"net/http"
 	"time"
@@ -22,9 +23,16 @@ type Server struct {
 func (s *Server) Start() {
 	log.Printf("[INFO] environment: %s", s.Env.Type)
 
+	staticFs, err := fs.New()
+	if err != nil {
+		log.Fatalf("could not initialise statik fs: %v", err)
+	}
+	staticServer := http.FileServer(staticFs)
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.Recoverer)
+	router.Use(middleware.Logger)
 	router.Use(middleware.Timeout(10 * time.Second))
 
 	if s.Sentry.Init(s.Env.Type, "web") {
@@ -36,7 +44,7 @@ func (s *Server) Start() {
 	}
 
 	router.Route("/", func(r chi.Router) {
-		r.With(sessionAuth(s.Web.API)).Route("/", func(r chi.Router) {
+		r.With(sessionAuth(s.Web.API)).Group(func(r chi.Router) {
 			r.Get("/", s.Web.GetIndex)
 			r.Get("/scoreboard", s.Web.GetScoreboard)
 			r.Get("/commit/{login}:{commitHash:[0-9a-z]+}", s.Web.GetCommit)
@@ -46,9 +54,13 @@ func (s *Server) Start() {
 		r.Get("/prerequisites", s.Web.GetPrerequisites)
 		r.Get("/logout", s.Web.Logout)
 	})
+
+	router.Mount(`/{:*\.(png|svg|ico|webmanifest)}`, staticServer)
+	router.Mount("/static", staticServer)
+
 	router.NotFound(s.Web.NotFound)
 
-	err := http.ListenAndServe(s.Addr, router)
+	err = http.ListenAndServe(s.Addr, router)
 	if err != nil {
 		log.Printf("[WARN] server has terminated: %s", err)
 	}
