@@ -35,9 +35,11 @@ jobs:
           docker login -u mkuznets -p ${{ secrets.GITHUB_TOKEN }} docker.pkg.github.com
 
           docker pull ${{ env.build_tag }}:latest || true
+          docker pull ${{ env.runner_tag }}:latest || true
+
           docker build . -t ${{ env.build_tag }}:latest --target build --cache-from ${{ env.build_tag }}:latest
           docker build . -t ${{ env.base_tag }}:$TAG --target base --cache-from ${{ env.build_tag }}:latest
-          docker build . -t ${{ env.runner_tag }}:$TAG --target runner --cache-from ${{ env.build_tag }}:latest  --cache-from ${{ env.base_tag }}:$TAG
+          docker build . -t ${{ env.runner_tag }}:$TAG --target runner --cache-from ${{ env.build_tag }}:latest --cache-from ${{ env.base_tag }}:$TAG --cache-from ${{ env.runner_tag }}:latest
 
           docker tag ${{ env.base_tag }}:$TAG ${{ env.base_tag }}:latest
           docker tag ${{ env.runner_tag }}:$TAG ${{ env.runner_tag }}:latest
