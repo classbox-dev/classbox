@@ -1,0 +1,40 @@
+name: Build classbox images
+on:
+  push:
+    branches:
+      - master
+      - test
+    paths:
+      - !*.md
+      - !sql/*
+  create:
+env:
+  base_tag: docker.pkg.github.com/mkuznets/classbox/base
+  runner_tag: docker.pkg.github.com/mkuznets/classbox/runner
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - id: build
+        name: docker build
+        run: |
+          cd $GITHUB_WORKSPACE
+          docker login -u mkuznets -p ${{ secrets.GITHUB_TOKEN }} docker.pkg.github.com
+
+          docker pull ${{ env.base_tag }}:latest || true
+          docker build . -f Dockerfile -t ${{ env.base_tag }}:${{ github.ref }} --cache-from ${{ env.base_tag }}:latest --target base
+          docker tag ${{ env.base_tag }}:${{ github.ref }} ${{ env.base_tag }}:latest
+
+          docker pull ${{ env.runner_tag }}:latest || true
+          docker build . -f Dockerfile -t ${{ env.runner_tag }}:${{ github.ref }} --cache-from ${{ env.runner_tag }}:latest --target runner
+          docker tag ${{ env.runner_tag }}:${{ github.ref }} ${{ env.runner_tag }}:latest
+
+      - name: docker push
+        run: |
+          docker push ${{ env.base_tag }}:${{ github.ref }}
+          docker push ${{ env.base_tag }}:latest
+
+          docker push ${{ env.runner_tag }}:${{ github.ref }}
+          docker push ${{ env.runner_tag }}:latest
