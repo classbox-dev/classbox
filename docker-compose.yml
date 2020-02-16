@@ -107,7 +107,7 @@ services:
     command: ["/srv/app", "runner"]
 
   db:
-    image: mkznts/base-postgres:0.2
+    image: mkznts/base-postgres:0.3
     container_name: "classbox-db"
     ports:
       - "5432:5432"
