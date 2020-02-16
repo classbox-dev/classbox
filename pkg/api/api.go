@@ -20,6 +20,7 @@ type API struct {
 	Jwt         *opts.JwtServer
 	RandomState string
 	WebUrl      string
+	EnvType     string
 }
 
 // Server is a

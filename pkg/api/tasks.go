@@ -187,7 +187,7 @@ func (api *API) DequeueTask(w http.ResponseWriter, r *http.Request) {
 		}
 
 		s3Client := s3.New(api.AWS.Session(), api.AWS.Bucket)
-		archiveKey := fmt.Sprintf("%s/%s/%s.zip", login, repoName, commitHash)
+		archiveKey := fmt.Sprintf("%s/%s/%s/%s.zip", api.EnvType, login, repoName, commitHash)
 		err = s3Client.Upload(r.Context(), archiveKey, bytes.NewBuffer(archive))
 		if err != nil {
 			return errors.Wrap(err, "could not upload archive to S3")

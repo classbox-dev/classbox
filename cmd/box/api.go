@@ -39,6 +39,7 @@ func (s *APICommand) Execute(args []string) error {
 			Jwt:         s.Jwt,
 			RandomState: utils.RandomString(32),
 			WebUrl:      s.WebURL,
+			EnvType:     s.Env.Type,
 		},
 	}
 	server.Start()
