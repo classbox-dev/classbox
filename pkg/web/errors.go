@@ -26,6 +26,7 @@ func (web *Web) HandleError(w http.ResponseWriter, r *http.Request, err error) {
 				hub.CaptureException(err)
 			})
 		}
+		log.Printf("[ERR] %v", v)
 		web.SendError(w, r, http.StatusInternalServerError, systemErrorText)
 	}
 }
