@@ -10,6 +10,7 @@ on:
       - '!sql/*'
   create:
 env:
+  build_tag: docker.pkg.github.com/mkuznets/classbox/classbox-build
   base_tag: docker.pkg.github.com/mkuznets/classbox/classbox-base
   runner_tag: docker.pkg.github.com/mkuznets/classbox/classbox-runner
 jobs:
@@ -29,19 +30,24 @@ jobs:
         name: docker build
         run: |
           cd $GITHUB_WORKSPACE
+          TAG=${GITHUB_REF##*/}
+
           docker login -u mkuznets -p ${{ secrets.GITHUB_TOKEN }} docker.pkg.github.com
 
-          docker pull ${{ env.base_tag }}:latest || true
-          docker build . -f Dockerfile -t ${{ env.base_tag }}:${{ steps.branch.outputs.name }} --cache-from ${{ env.base_tag }}:latest --target base
-          docker tag ${{ env.base_tag }}:${{ steps.branch.outputs.name }} ${{ env.base_tag }}:latest
+          docker pull ${{ env.build_tag }}:latest || true
+          docker build . -t ${{ env.build_tag }}:latest --target build --cache-from ${{ env.build_tag }}:latest
+          docker build . -t ${{ env.base_tag }}:$TAG --target base --cache-from ${{ env.build_tag }}:latest
+          docker build . -t ${{ env.runner_tag }}:$TAG --target runner --cache-from ${{ env.build_tag }}:latest  --cache-from ${{ env.base_tag }}:$TAG
 
-          docker build . -f Dockerfile -t ${{ env.runner_tag }}:${{ steps.branch.outputs.name }} --cache-from ${{ env.base_tag }}:${{ steps.branch.outputs.name }} --target runner
-          docker tag ${{ env.runner_tag }}:${{ steps.branch.outputs.name }} ${{ env.runner_tag }}:latest
+          docker tag ${{ env.base_tag }}:$TAG ${{ env.base_tag }}:latest
+          docker tag ${{ env.runner_tag }}:$TAG ${{ env.runner_tag }}:latest
 
       - name: docker push
         run: |
-          docker push ${{ env.base_tag }}:${{ steps.branch.outputs.name }}
-          docker push ${{ env.base_tag }}:latest
+          TAG=${GITHUB_REF##*/}
 
-          docker push ${{ env.runner_tag }}:${{ steps.branch.outputs.name }}
+          docker push ${{ env.base_tag }}:$TAG
+          docker push ${{ env.base_tag }}:latest
+          docker push ${{ env.runner_tag }}:$TAG
           docker push ${{ env.runner_tag }}:latest
+          docker push ${{ env.build_tag }}:latest
