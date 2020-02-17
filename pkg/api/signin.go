@@ -164,9 +164,9 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		userId    uint64
-		instId    *uint64
-		honorCode bool
+		userId     uint64
+		instId     *uint64
+		honourCode bool
 	)
 	err = db.Tx(r.Context(), api.DB, func(tx pgx.Tx) error {
 		err := tx.QueryRow(r.Context(), `
@@ -179,7 +179,7 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 			repository_name=EXCLUDED.repository_name,
 			login=EXCLUDED.login
 		RETURNING id, honor_code, installation_id
-		`, user.ID, user.Login, user.Email, repo.ID, repo.Name).Scan(&userId, &honorCode, &instId)
+		`, user.ID, user.Login, user.Email, repo.ID, repo.Name).Scan(&userId, &honourCode, &instId)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -216,10 +216,10 @@ func (api *API) CreateUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var finalPath string
-		if honorCode {
+		if honourCode {
 			finalPath = "/"
 		} else {
-			finalPath = "/signin?step=honor_code"
+			finalPath = "/signin?step=honour_code"
 		}
 		finishUrl := fmt.Sprintf("%s%s", api.WebUrl, finalPath)
 		render.JSON(w, r, models.AuthStage{
@@ -314,11 +314,11 @@ func (api *API) InstallApp(w http.ResponseWriter, r *http.Request) {
 	var (
 		login, repoName string
 		userId          uint64
-		honorCode       bool
+		honourCode      bool
 	)
 	err = api.DB.QueryRow(r.Context(), `
 	SELECT id, login, repository_name, honor_code FROM "users" WHERE "github_id"=$1 LIMIT 1
-	`, inst.Account.ID).Scan(&userId, &login, &repoName, &honorCode)
+	`, inst.Account.ID).Scan(&userId, &login, &repoName, &honourCode)
 	switch {
 	case err == pgx.ErrNoRows:
 		e := fmt.Errorf("user not found: %s (id=%d)", inst.Account.Login, inst.Account.ID)
@@ -350,10 +350,10 @@ func (api *API) InstallApp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var finalPath string
-	if honorCode {
+	if honourCode {
 		finalPath = "/"
 	} else {
-		finalPath = "/signin?step=honor_code"
+		finalPath = "/signin?step=honour_code"
 	}
 	finishUrl := fmt.Sprintf("%s%s", api.WebUrl, finalPath)
 	render.JSON(w, r, &models.AuthStage{Session: session, Url: finishUrl})

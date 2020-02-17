@@ -59,8 +59,15 @@ func (web *Web) GetSignin(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, stage.Url, http.StatusFound)
 		return
 
-	case "honor_code":
-		tpl, err := web.Templates.New("honor_code")
+	case "honour_code":
+		var template string
+		switch r.URL.Query().Get("lang") {
+		default:
+			template = "honour_code_en"
+		case "ru":
+			template = "honour_code_ru"
+		}
+		tpl, err := web.Templates.New(template)
 		if err != nil {
 			web.handleSigninError(w, r, err)
 			return
