@@ -3,7 +3,6 @@ package web
 import (
 	"net/http"
 	"strconv"
-	"time"
 )
 
 func (web *Web) GetSignin(w http.ResponseWriter, r *http.Request) {
@@ -93,17 +92,15 @@ func (web *Web) handleSigninError(w http.ResponseWriter, r *http.Request, e erro
 }
 
 func (web *Web) Logout(w http.ResponseWriter, r *http.Request) {
-	path := "/"
-	cookie, err := r.Cookie("session")
-	if err == nil && cookie.Path != "" {
-		path = cookie.Path
-	}
 	http.SetCookie(w, &http.Cookie{
-		Name:    "session",
-		MaxAge:  -1,
-		Value:   "____",
-		Path:    path,
-		Expires: time.Now().Add(-24 * time.Hour),
+		Name:   "session",
+		MaxAge: -1,
+		Path:   "/",
+	})
+	http.SetCookie(w, &http.Cookie{
+		Name:   "session",
+		MaxAge: -1,
+		Path:   "/stdlib",
 	})
 	http.Redirect(w, r, web.WebURL, http.StatusFound)
 }
