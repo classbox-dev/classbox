@@ -95,6 +95,7 @@ func (web *Web) Logout(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:   "session",
 		MaxAge: -1,
+		Path: "/",
 	})
 	http.Redirect(w, r, web.WebURL, http.StatusFound)
 }

@@ -127,6 +127,7 @@ func (as *AuthStage) SetAuthCookie(w http.ResponseWriter) {
 		Value:    as.Session,
 		Expires:  expiration,
 		HttpOnly: true,
+		Path: "/",
 		// SameSite: http.SameSiteStrictMode,
 		// Secure:   true,
 	}

@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"github.com/go-chi/chi"
 	"github.com/mkuznets/classbox/pkg/api/client"
 	"net/http"
 )
@@ -19,4 +20,14 @@ func sessionAuth(API func(r *http.Request) *client.Client) func(next http.Handle
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func validateProject(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if chi.URLParam(r, "project") != "stdlib" {
+			http.Redirect(w, r, "/stdlib", http.StatusMovedPermanently)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
