@@ -44,24 +44,23 @@ func (s *Server) Start() {
 	}
 
 	router.Route("/", func(r chi.Router) {
+		r.Mount("/.static", staticServer)
+		r.Mount(`/{:*\.(png|svg|ico|webmanifest)}`, staticServer)
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/stdlib", http.StatusMovedPermanently)
 			return
 		})
-		r.Mount(`/{:*\.(png|svg|ico|webmanifest)}`, staticServer)
-		r.Mount("/static", staticServer)
-	})
-
-	router.With(validateProject).Route("/{project:[0-9a-z]+}", func(r chi.Router) {
-		r.With(sessionAuth(s.Web.API)).Group(func(r chi.Router) {
-			r.Get("/", s.Web.GetIndex)
-			r.Get("/scoreboard", s.Web.GetScoreboard)
-			r.Get("/commit/{login}:{commitHash:[0-9a-z]+}", s.Web.GetCommit)
+		router.With(validateProject).Route("/{project:[0-9a-z]+}", func(r chi.Router) {
+			r.With(sessionAuth(s.Web.API)).Group(func(r chi.Router) {
+				r.Get("/", s.Web.GetIndex)
+				r.Get("/scoreboard", s.Web.GetScoreboard)
+				r.Get("/commit/{login}:{commitHash:[0-9a-z]+}", s.Web.GetCommit)
+				r.Get("/quickstart", s.Web.GetQuickstart)
+				r.Get("/prerequisites", s.Web.GetPrerequisites)
+			})
+			r.Get("/signin", s.Web.GetSignin)
+			r.Get("/logout", s.Web.Logout)
 		})
-		r.Get("/signin", s.Web.GetSignin)
-		r.Get("/quickstart", s.Web.GetQuickstart)
-		r.Get("/prerequisites", s.Web.GetPrerequisites)
-		r.Get("/logout", s.Web.Logout)
 	})
 
 	router.NotFound(s.Web.NotFound)
