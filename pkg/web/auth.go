@@ -92,10 +92,15 @@ func (web *Web) handleSigninError(w http.ResponseWriter, r *http.Request, e erro
 }
 
 func (web *Web) Logout(w http.ResponseWriter, r *http.Request) {
+	path := "/"
+	cookie, err := r.Cookie("session")
+	if err == nil && cookie.Path != "" {
+		path = cookie.Path
+	}
 	http.SetCookie(w, &http.Cookie{
 		Name:   "session",
 		MaxAge: -1,
-		Path: "/",
+		Path:   path,
 	})
 	http.Redirect(w, r, web.WebURL, http.StatusFound)
 }
