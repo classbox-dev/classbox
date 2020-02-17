@@ -28,7 +28,7 @@ func (g *OAuth) Config() *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     g.ClientID,
 		ClientSecret: g.ClientSecret,
-		Scopes:       []string{"repo"},
+		Scopes:       []string{"repo", "read:user"},
 		Endpoint:     github.Endpoint,
 	}
 }
