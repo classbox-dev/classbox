@@ -17,7 +17,7 @@
 <script src="https://strapdownjs.com/v/0.2/strapdown.js"></script>
 <script>
 let base = document.createElement('base');
-base.href = window.location.href.replace(/\/$/, "") + '/';
+base.href = window.location.pathname.replace(/\/$/, "") + '/';
 document.getElementsByTagName('body')[0].appendChild(base);
 </script>
 <style>body { padding-top: 0}</style>
