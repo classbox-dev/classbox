@@ -1,6 +1,10 @@
 {{define "title"}}Prerequisites @ hsecode{{end -}}
 # Prerequisites
 
+{{if not .User -}}
+[Sign in](signin) to open the page.
+{{- else -}}
+
 Why, sure, you *can* write and submit code using that silly editor on GitHub. However, *efficient* programming requires some proper development tools.
 
 **Note for Windows users:** (tl;dr do not use WSL.) As with most open-source tools, Go is much better supported on Unix-like systems. This may tempt you to use [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/about) (WSL), which is a fully-fledged Ubuntu distribution inside a running Windows. However, it is still somewhat hard to integrate the Windows-world (filesystem and graphical IDE) with the WSL-world. Unless you want to write your code in Vim or deal with all sorts of weird hacks, I do not recommend using WSL (yet). This tutorial goes on with installing Windows-native tools. As far as I can tell, for this course they work just fine.
@@ -11,14 +15,15 @@ You are expected to have Go version 1.13.x on your computer.
 
 ### Linux, macOS
 
-* You are better off installing it [from a tarball](https://golang.org/doc/install#tarball), **not** with a package manager (unless you know what you are doing).
-* Make sure to add {{"`<...>/go/bin`" |unescape}}  to the `PATH` environment variable as described in the instruction.
+* You are better off installing it [from a .tar.gz archive](https://golang.org/doc/install#tarball), **not** with a package manager (unless you know what you are doing).
+* Make sure to add {{"`<...>/go/bin`" |unescape}}  to the PATH environment variable as described in the instruction.
 * Set up a directory for go packages, I recommend `$HOME/.local/go`:
   ```
   mkdir -p $HOME/.local/go
   go env -w GOPATH=$HOME/.local/go
   ```
-  Also add `$HOME/.local/go/bin` to the `PATH`.
+  Also add `$HOME/.local/go/bin` to the PATH.
+* Log off and log on again to apply the changes to PATH
 * Run `go env -w GO111MODULE=on`
 
 ### Windows
@@ -35,7 +40,7 @@ You are expected to have Go version 1.13.x on your computer.
   setx PATH "%PATH%;%USERPROFILE%\go\bin"
   ```
 
-Also, run `go env -w GO111MODULE=on`
+In any case, run `go env -w GO111MODULE=on`
 
 ### Test Your Installation
 
@@ -54,19 +59,41 @@ on
 
 ## Install Git
 
-I strongly recommend using git as a command-line tool, **not** as a GUI app (such as GitHub Desktop/SourceTree/etc).
+I strongly recommend using Git as a command-line tool, **not** as a GUI app (such as GitHub Desktop/SourceTree/etc).
 
 * Linux/macOS: you probably already have git installed.
 * Windows: unless you already have some collection of Linux-like tools (MinGW, Cygwin, or their distributions), install [Git for Windows](https://gitforwindows.org). It comes with Bash ("Git Bash"), GNU tools, and a separate terminal emulator (which you may or may not want to use).
+
+Check the installation:
+
+```
+$ git --version
+git version 2.17.1
+```
 
 ## (optional) Setup SSH Keys
 
 Your working repository is private. If you clone it via HTTPS (`git clone https://...`), you will have to enter your GitHub login and password on for each operation. It is rather annoying. Instead, I recommend cloning via SSH (`git clone git@github.com:...`). It requires setting up a pair of SSH keys: for your computer (private key) and the repository (public key). Once you do that, you will not have to supply passwords for git ever again.
 
-Follow the [instruction on GitHub](https://help.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh), these articles in particular:
+Follow the instructions on GitHub:
 
-* [Generating a new SSH key and adding it to the ssh-agent](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
-* [Adding a new SSH key to your GitHub account](https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account)
+1. [Generating a new SSH key and adding it to the ssh-agent](https://help.github.com/en/github/authenticating-to-github/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+2. [Adding a new SSH key to your GitHub account](https://help.github.com/en/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account)
+
+## Clone Working Repository
+
+Clone the [working repository](https://github.com/{{.User.Login}}/{{.User.Repo}}) somewhere on your computer:
+
+```
+$ git clone git@github.com:{{.User.Login}}/{{.User.Repo}}.git
+```
+
+OR use https URL if you decided not to install SSH keys:
+
+```
+$ git clone https://github.com/{{.User.Login}}/{{.User.Repo}}.git
+```
+
 
 ## Install genny
 
@@ -106,7 +133,6 @@ pre-commit 2.0.1
 
 Then install the hooks in your working repository:
 ```
-$ go clone git@github.com:[username]/hsecode-stdlib.git
 $ cd hsecode-stdlib
 $ pre-commit install
 pre-commit installed at .git/hooks/pre-commit
@@ -116,13 +142,13 @@ pre-commit installed at .git/hooks/pre-commit
 
 Skip this section entirely if you already have strong editor/IDE preferences. Just make sure your thing have at least some amount of Go support.
 
-### GoLand
+### Option 1: GoLand
 
 As of February 2020, [GoLand](https://www.jetbrains.com/go/) is by far the best choice for programming in Go. It comes [free of charge for students](https://www.jetbrains.com/student/).
 
 However, I understand if you do not want to deal with another big honking product from JetBrains. If that is the case, try VS Code as an alternative.
 
-### Visual Studio Code
+### Option 2: Visual Studio Code
 
 [VS Code](https://code.visualstudio.com) has [officially bad](https://github.com/Microsoft/vscode-go/wiki/Go-modules-support-in-Visual-Studio-Code) support of Go modules. Still, as far as I can tell it has *just enough* of it for this course.
 
@@ -152,10 +178,12 @@ However, I understand if you do not want to deal with another big honking produc
 * VS Code may continue to harass you about restarting or installing more things. Let it do whatever it says.
 * In case of any problems read more about configuring the Go Language Server: [[1]](https://github.com/microsoft/vscode-go#go-language-server) [[2]](https://github.com/golang/tools/blob/master/gopls/doc/vscode.md)
 
-Now hopefully you can open `hsecode-stdlib` with *File -> Open folder* and everything will be just fine.
+Now hopefully you can open the `hsecode-stdlib` folder with *File -> Open folder* and everything will be just fine.
 
 ## Quickstart
 
 Continue with [Quickstart](../quickstart) to start implementing stdlib.
+
+{{end}}
 
 * [Back to main page](..)
