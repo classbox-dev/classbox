@@ -87,7 +87,7 @@ The programming part of the package is fairly straightforward:
 func Min(values ...ValueType) ValueType {
 	m := values[0]
 	for i := 1; i {{ "<"| unescape }} len(values); i++ {
-		if values[i] {{ ">"| unescape }} m {
+		if values[i] {{ "<"| unescape }} m {
 			m = values[i]
 		}
 	}
