@@ -157,7 +157,7 @@ The source code of these tests is secret. Depending on the test, it may not be p
 
 ## Write Your Own Tests
 
-Test files must be prefixed with  `_test.go` and are typically located in the package you are going to test. Their package declaration should also be prefixed with `_test`. You can safely commit the test files to the repository: the test system completely ignores them.
+Test files must be suffixed with  `_test.go` and are typically located in the package you are going to test. Their package declaration should also be suffixed with `_test`. You can safely commit the test files to the repository: the test system completely ignores them.
 
 A simple unit-test written with a built-in [testing](https://golang.org/pkg/testing/) framework looks like this:
 
