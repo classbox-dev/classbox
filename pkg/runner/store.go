@@ -81,7 +81,7 @@ func (s *Store) Execute(ctx context.Context) error {
 				log.Printf("[INFO] [%s] `%s` perf tests failed: %v", s.ref, a.Test, perfRun.Output)
 				run.Status, run.Output = perfRun.Status, perfRun.Output
 			} else {
-				log.Printf("[INFO] [%s] `%s` perf tests: %v", s.ref, a.Test, run.Score)
+				log.Printf("[INFO] [%s] `%s` perf tests: %v", s.ref, a.Test, perfRun.Score)
 				run.Score = perfRun.Score
 			}
 		}
