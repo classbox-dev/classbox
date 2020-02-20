@@ -35,7 +35,7 @@ func (api *API) GetUserStats(w http.ResponseWriter, r *http.Request) {
 			JOIN tests as t ON (t.id=ch.test_id)
 		WHERE ci.user_id=$1 AND ch.test_id IS NOT NULL AND t.is_deleted='f'
 		ORDER BY ch.test_id, ch.id DESC
-	) as s ON(s.test_id=t.id) WHERE t.is_deleted='f' ORDER BY name;`, user.Id)
+	) as s ON(s.test_id=t.id) WHERE t.is_deleted='f' ORDER BY topic,name;`, user.Id)
 	if err != nil {
 		E.Handle(w, r, errors.WithStack(err))
 		return
