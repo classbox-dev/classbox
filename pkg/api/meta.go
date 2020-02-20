@@ -77,7 +77,7 @@ func (api *API) UpdateTests(w http.ResponseWriter, r *http.Request) {
 		testNames := &pgtype.TextArray{}
 		_ = testNames.Set(utils.UniqueStringFields(tests, "Name"))
 
-		_, err := tx.Exec(r.Context(), `UPDATE tests SET is_deleted='t' WHERE name!=ANY($1)`, testNames)
+		_, err := tx.Exec(r.Context(), `UPDATE tests SET is_deleted='t' WHERE NOT (name=ANY($1))`, testNames)
 		if err != nil {
 			return errors.WithStack(err)
 		}
