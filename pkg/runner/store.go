@@ -64,20 +64,26 @@ func (s *Store) Execute(ctx context.Context) error {
 		run := &models.Run{Hash: a.Hash}
 		err = s.dockerClient.RunTest(ctx, a.Test, run)
 		if err != nil {
-			log.Printf("[ERR] [%s] error during testing `%s`: %v", s.ref, a.Test, err)
+			log.Printf("[ERR] [%s] error during unit tests `%s`: %v", s.ref, a.Test, err)
 			continue
 		}
 
 		log.Printf("[INFO] [%s] `%s` unit tests: %s", s.ref, a.Test, run.Status)
 
 		if run.Status == "success" {
-			perf, err := s.dockerClient.RunPerf(ctx, a.Test)
+			var perfRun models.Run
+			err := s.dockerClient.RunPerf(ctx, a.Test, &perfRun)
 			if err != nil {
 				log.Printf("[ERR] [%s] error during perf measuring `%s`: %v", s.ref, a.Test, err)
 				continue
 			}
-			run.Score = perf
-			log.Printf("[INFO] [%s] `%s` perf tests: %v", s.ref, a.Test, perf)
+			if perfRun.Status != "success" {
+				log.Printf("[INFO] [%s] `%s` perf tests failed: %v", s.ref, a.Test, perfRun.Output)
+				run.Status, run.Output = perfRun.Status, perfRun.Output
+			} else {
+				log.Printf("[INFO] [%s] `%s` perf tests: %v", s.ref, a.Test, run.Score)
+				run.Score = perfRun.Score
+			}
 		}
 		a.Run = run
 	}

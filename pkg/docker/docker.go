@@ -164,15 +164,33 @@ func (client *Client) RunTest(ctx context.Context, test string, run *models.Run)
 	return nil
 }
 
-func (client *Client) RunPerf(ctx context.Context, name string) (uint64, error) {
-	r, _ := client.run(ctx, map[string]string{"classbox-data": "/in"},
+func (client *Client) RunPerf(ctx context.Context, test string, run *models.Run) error {
+
+	r, err := client.run(ctx, map[string]string{"classbox-data": "/in"},
+		"--network", "none",
+		"-e", "TIMEOUT=10", client.RunnerImage,
+		test+".test", "-test.run", "Perf",
+	)
+	if err != nil {
+		return err
+	}
+	if r.Success() {
+		run.Status = "success"
+	} else {
+		run.Status, run.Output = "failure", string(r.Output)
+		return nil
+	}
+
+	r, err = client.run(ctx, map[string]string{"classbox-data": "/in"},
 		"--security-opt", "seccomp=unconfined",
 		"--network", "none",
-		"-e", "TIMEOUT=20",
-		client.RunnerImage,
+		"-e", "TIMEOUT=20", client.RunnerImage,
 		"perf", "stat", "-x", ";", "-r", "5",
-		name+".test", "-test.run", "Perf",
+		test+".test", "-test.run", "Perf",
 	)
+	if err != nil {
+		return err
+	}
 
 	var perf uint64
 	for _, line := range strings.Split(string(r.Output), "\n") {
@@ -184,9 +202,10 @@ func (client *Client) RunPerf(ctx context.Context, name string) (uint64, error) 
 		}
 	}
 	if perf == 0 {
-		return perf, errors.New("perf data not found")
+		return errors.New("perf data not found")
 	}
-	return perf, nil
+	run.Score = perf
+	return nil
 }
 
 func Censor(args []string) []string {

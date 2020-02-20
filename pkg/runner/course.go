@@ -62,8 +62,8 @@ func (rr *Runner) upgradeCourse() error {
 	runs := make([]*models.Run, 0, len(store.artifacts))
 
 	for _, a := range store.artifacts {
-		if a.Run == nil {
-			return errors.Errorf("run is missing for `%s`, cannot continue", a.Test)
+		if a.Run == nil || a.Run.Status != "success" {
+			return errors.Errorf("run is missing or failed for `%s`, cannot continue", a.Test)
 		}
 		r := *a.Run
 		r.Baseline = true
