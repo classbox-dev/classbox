@@ -117,7 +117,7 @@ New file `int/dont_edit.go` will be created.
 
 #### Ensure that your code meets the stardard code style
 ```
-$ gofmt -w -l 
+$ gofmt -w -l .
 ```
 
 The command will fix all formatting issues (if there are any) and print a list of changed files.
