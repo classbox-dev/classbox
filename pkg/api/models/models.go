@@ -56,7 +56,7 @@ type RunHash struct {
 }
 
 func (r *Run) CompareToBaseline(b *Run) {
-	if r.Status != "success" {
+	if r.Score == 0 {
 		return
 	}
 	percent := r.Score * 1000 / b.Score
@@ -64,6 +64,8 @@ func (r *Run) CompareToBaseline(b *Run) {
 	r.Output = fmt.Sprintf("Performance: %.1f%% of baseline", humanPercent)
 	if percent > 1200 {
 		r.Status = "failure"
+	} else {
+		r.Status = "success"
 	}
 }
 
@@ -127,7 +129,7 @@ func (as *AuthStage) SetAuthCookie(w http.ResponseWriter) {
 		Value:    as.Session,
 		Expires:  expiration,
 		HttpOnly: true,
-		Path: "/",
+		Path:     "/",
 		// SameSite: http.SameSiteStrictMode,
 		// Secure:   true,
 	}
