@@ -16,4 +16,4 @@
 {{end -}}
 {{end}}
 
-* [Back to main page](..)
+* [Back to main page](../..)
