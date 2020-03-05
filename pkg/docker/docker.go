@@ -168,7 +168,8 @@ func (client *Client) RunPerf(ctx context.Context, test string, run *models.Run)
 
 	r, err := client.run(ctx, map[string]string{"classbox-data": "/in"},
 		"--network", "none",
-		"-e", "TIMEOUT=10", client.RunnerImage,
+		"-e", "TIMEOUT=10", "-e", "GOGC=off",
+		client.RunnerImage,
 		test+".test", "-test.run", "Perf",
 	)
 	if err != nil {
@@ -184,7 +185,8 @@ func (client *Client) RunPerf(ctx context.Context, test string, run *models.Run)
 	r, err = client.run(ctx, map[string]string{"classbox-data": "/in"},
 		"--security-opt", "seccomp=unconfined",
 		"--network", "none",
-		"-e", "TIMEOUT=20", client.RunnerImage,
+		"-e", "TIMEOUT=20", "-e", "GOGC=off",
+		client.RunnerImage,
 		"perf", "stat", "-x", ";", "-r", "5",
 		test+".test", "-test.run", "Perf",
 	)
