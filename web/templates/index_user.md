@@ -6,6 +6,7 @@ Your working repository: [{{ .User.Login }}/{{ .User.Repo }}](https://github.com
 
 ## Documentaion
 
+* [Honour code](signin?step=honour_code)
 * [Prerequisites](prerequisites)
 * [Quickstart](quickstart)
 * [stdlib documentation]({{.DocsURL}})
