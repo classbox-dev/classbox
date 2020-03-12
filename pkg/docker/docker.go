@@ -204,7 +204,8 @@ func (client *Client) RunPerf(ctx context.Context, test string, run *models.Run)
 		}
 	}
 	if perf == 0 {
-		return errors.New("perf data not found")
+		run.Status, run.Output = "failure", fmt.Sprintf("failed to run perf tests: %v", string(r.Output))
+		return nil
 	}
 	run.Score = perf
 	return nil
