@@ -7,7 +7,7 @@ services:
       target: base
     image: classbox-base:latest
     container_name: "classbox-api"
-    restart: always
+    restart: unless-stopped
     networks:
       - web
       - default
