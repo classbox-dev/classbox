@@ -57,6 +57,7 @@ func (s *Server) Start() {
 				r.Get("/commit/{login}:{commitHash:[0-9a-z]+}", s.Web.GetCommit)
 				r.Get("/quickstart", s.Web.GetQuickstart)
 				r.Get("/prerequisites", s.Web.GetPrerequisites)
+				r.Get("/grading", s.Web.GetGrading)
 			})
 			r.Get("/signin", s.Web.GetSignin)
 			r.Get("/logout", s.Web.Logout)

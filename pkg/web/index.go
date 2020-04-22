@@ -2,6 +2,7 @@ package web
 
 import (
 	"github.com/mkuznets/classbox/pkg/api/models"
+	"math"
 	"net/http"
 )
 
@@ -9,6 +10,13 @@ type indexPage struct {
 	User    *models.User
 	DocsURL string
 	Stats   *models.UserStats
+	Grade   int
+}
+
+func gradeFromScore(score uint64) int {
+	preGrade := math.Floor(float64(score)/10. + 0.5)
+	grade := math.Min(10., preGrade)
+	return int(grade)
 }
 
 func (web *Web) GetIndex(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +44,7 @@ func (web *Web) GetIndex(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		page.Stats = stats
+		page.Grade = gradeFromScore(stats.Score)
 	}
 
 	tpl, err := web.Templates.New(tplName)

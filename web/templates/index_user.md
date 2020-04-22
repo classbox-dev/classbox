@@ -14,7 +14,8 @@ Your working repository: [{{ .User.Login }}/{{ .User.Repo }}](https://github.com
 ## Tests
 
 * Total score: {{.Stats.Score}} out of {{.Stats.Total}}
-* Grade: *to be determined*
+* Grade (*Theory of Algorithms* only): **{{.Grade}} out of 10**
+* [Grading policy](grading)
 * [Scoreboard](scoreboard)
 
 | ID | Description | Score | Passed |
