@@ -1,6 +1,7 @@
 package web
 
 import (
+	"bytes"
 	"github.com/getsentry/sentry-go"
 	"github.com/mkuznets/classbox/pkg/api/client"
 	"github.com/mkuznets/classbox/pkg/api/models"
@@ -48,8 +49,14 @@ func (web *Web) SendError(w http.ResponseWriter, r *http.Request, code int, text
 	}
 	w.WriteHeader(code)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	err = tpl.Execute(w, text)
+
+	resp := bytes.NewBufferString("")
+	err = tpl.Execute(resp, text)
 	if err != nil {
+		http500(err)
+		return
+	}
+	if _, err := w.Write(resp.Bytes()); err != nil {
 		http500(err)
 		return
 	}
