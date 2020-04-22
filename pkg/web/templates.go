@@ -22,18 +22,7 @@ func NewTemplates() (*Templates, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-
 	tpl := &Templates{fs: f}
-
-	src, err := tpl.readFile("/templates/index.html")
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	tpl.base, err = template.New("html").Parse(src)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
 
 	customFuncs := template.FuncMap{
 		"indent": func(spaces int, v string) string {
@@ -82,7 +71,15 @@ func NewTemplates() (*Templates, error) {
 		},
 	}
 
-	tpl.base = tpl.base.Funcs(customFuncs)
+	src, err := tpl.readFile("/templates/index.html")
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	tpl.base, err = template.New("html").Funcs(customFuncs).Parse(src)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 
 	return tpl, nil
 }
