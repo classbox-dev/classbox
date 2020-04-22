@@ -15,6 +15,7 @@
 {{template "markdown" .}}
 </xmp>
 <script src="/.static/strapdown/0.2/strapdown.js"></script>
+{{template "mathjax" . -}}
 <script>
 let base = document.createElement('base');
 base.href = window.location.pathname.replace(/\/$/, "") + '/';

@@ -81,6 +81,11 @@ func NewTemplates() (*Templates, error) {
 		return nil, errors.WithStack(err)
 	}
 
+	_, err = tpl.base.New("mathjax").Parse("")
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	return tpl, nil
 }
 
@@ -113,4 +118,15 @@ func (t *Templates) New(name string) (*template.Template, error) {
 		return nil, errors.WithStack(err)
 	}
 	return tpl, nil
+}
+
+func (t *Templates) EnableMath(tpl *template.Template) error {
+	html, err := t.readFile("/templates/mathjax.html")
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	if _, err := tpl.New("mathjax").Parse(html); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
