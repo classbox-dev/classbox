@@ -2,7 +2,7 @@
 # Prerequisites
 
 {{if not .User -}}
-[Sign in](signin) to open the page.
+[Sign in](../signin) to open the page.
 {{- else -}}
 
 Why, sure, you *can* write and submit code using that silly editor on GitHub. However, *efficient* programming requires some proper development tools.

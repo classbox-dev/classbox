@@ -2,10 +2,6 @@
 
 # Grading Policy
 
-{{if not .User -}}
-[Sign in](signin) to open the page.
-{{- else -}}
-
 The 10-point grade for *Theory of Algorithms*
 is determined from the total score for passed stdlib tests
 by the end of the academic year:
@@ -26,7 +22,5 @@ ${
     0.4 \cdot \text{Algorithms} + 0.6 \cdot \text{Programming} + 0.5
   \right\rfloor
 }$
-
-{{end -}}
 
 * [Back to main page](..)

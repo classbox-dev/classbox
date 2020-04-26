@@ -1,7 +1,7 @@
 {{define "title"}}Scoreboard @ hsecode{{end -}}
 # Scoreboard
 {{if not .User -}}
-[Sign in](signin) to see the scoreboard.
+[Sign in](../signin) to see the scoreboard.
 {{- else -}}
 | # | Login | Passed tests | Score |
 |---|-------|--------------|-------|

@@ -3,7 +3,7 @@
 # Quickstart
 
 {{if not .User -}}
-[Sign in](signin) to open the page.
+[Sign in](../signin) to open the page.
 {{- else -}}
 
 This tutorial goes through the whole process of implementing a part of stdlib and submitting the result. But first, a bit of a backstory...
