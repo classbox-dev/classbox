@@ -72,7 +72,7 @@ func (app *App) Token() (*oauth2.Token, error) {
 
 	jwtEncoder := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.StandardClaims{
 		IssuedAt:  time.Now().Unix(),
-		ExpiresAt: time.Now().Add(10 * time.Minute).Unix(),
+		ExpiresAt: time.Now().Add(5 * time.Minute).Unix(),
 		Issuer:    app.ID,
 	})
 
