@@ -109,8 +109,6 @@ services:
   db:
     image: mkznts/base-postgres:0.3
     container_name: "classbox-db"
-    ports:
-      - "5432:5432"
     volumes:
       - classbox-db:/var/lib/postgresql/data
       - ./sql:/sql
