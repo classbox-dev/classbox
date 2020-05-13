@@ -82,7 +82,8 @@ func (c *Client) Request(ctx context.Context, method string, path string, body [
 	defer resp.Body.Close()
 
 	if err := checkResponse(resp); err != nil {
-		return nil, errors.WithMessagef(err, "HTTP error on %s %s", method, path)
+		// return nil, errors.WithMessagef(err, "HTTP error on %s %s", method, path)
+		return nil, err
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
