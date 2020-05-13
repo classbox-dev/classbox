@@ -5,10 +5,11 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
-	"time"
 )
 
 type JwtServer struct {

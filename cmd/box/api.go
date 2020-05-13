@@ -1,10 +1,11 @@
 package main
 
 import (
+	"log"
+
 	"github.com/mkuznets/classbox/pkg/api"
 	"github.com/mkuznets/classbox/pkg/opts"
 	"github.com/mkuznets/classbox/pkg/utils"
-	"log"
 )
 
 // APICommand with command line flags and env

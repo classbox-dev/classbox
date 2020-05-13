@@ -2,13 +2,14 @@ package runner
 
 import (
 	"context"
+	"log"
+	"os"
+	"path/filepath"
+
 	"github.com/mkuznets/classbox/pkg/api/models"
 	"github.com/mkuznets/classbox/pkg/docker"
 	"github.com/mkuznets/classbox/pkg/fileutils"
 	"github.com/pkg/errors"
-	"log"
-	"os"
-	"path/filepath"
 )
 
 type Artifact struct {

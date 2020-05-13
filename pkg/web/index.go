@@ -1,9 +1,10 @@
 package web
 
 import (
-	"github.com/mkuznets/classbox/pkg/api/models"
 	"math"
 	"net/http"
+
+	"github.com/mkuznets/classbox/pkg/api/models"
 )
 
 type indexPage struct {

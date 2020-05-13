@@ -2,11 +2,12 @@ package web
 
 import (
 	"bytes"
+	"log"
+	"net/http"
+
 	"github.com/getsentry/sentry-go"
 	"github.com/mkuznets/classbox/pkg/api/client"
 	"github.com/mkuznets/classbox/pkg/api/models"
-	"log"
-	"net/http"
 )
 
 const systemErrorText = `Unexpected system error. Developers have been alerted and will handle the issue as soon as possible.`

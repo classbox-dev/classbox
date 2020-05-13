@@ -2,6 +2,8 @@ package api
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/go-chi/render"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
@@ -10,7 +12,6 @@ import (
 	"github.com/mkuznets/classbox/pkg/db"
 	"github.com/mkuznets/classbox/pkg/utils"
 	"github.com/pkg/errors"
-	"net/http"
 )
 
 func (api *API) GetTests(w http.ResponseWriter, r *http.Request) {

@@ -3,6 +3,10 @@ package api
 import (
 	"bytes"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
@@ -15,9 +19,6 @@ import (
 	"github.com/mkuznets/classbox/pkg/utils"
 	"github.com/mkuznets/classbox/pkg/web"
 	"github.com/pkg/errors"
-	"net/http"
-	"strings"
-	"time"
 )
 
 func (api *API) EnqueueTask(w http.ResponseWriter, r *http.Request) {

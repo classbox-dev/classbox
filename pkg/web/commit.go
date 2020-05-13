@@ -1,8 +1,9 @@
 package web
 
 import (
-	"github.com/go-chi/chi"
 	"net/http"
+
+	"github.com/go-chi/chi"
 )
 
 func (web *Web) GetCommit(w http.ResponseWriter, r *http.Request) {

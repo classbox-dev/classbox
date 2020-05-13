@@ -7,16 +7,17 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	E "github.com/mkuznets/classbox/pkg/api/errors"
 	"github.com/mkuznets/classbox/pkg/api/models"
 	"github.com/pkg/errors"
-	"io/ioutil"
-	"net/http"
-	"strings"
-	"time"
 )
 
 var expirationLimit = 5 * time.Minute

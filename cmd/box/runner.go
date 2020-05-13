@@ -3,9 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/mkuznets/classbox/pkg/opts"
 	"github.com/mkuznets/classbox/pkg/runner"
-	"net/http"
 )
 
 // RunnerCommand with command line flags and env

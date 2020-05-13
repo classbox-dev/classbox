@@ -1,10 +1,11 @@
 package utils_test
 
 import (
-	"github.com/mkuznets/classbox/pkg/utils"
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/mkuznets/classbox/pkg/utils"
 )
 
 type Foo struct {

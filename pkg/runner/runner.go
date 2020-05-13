@@ -3,18 +3,19 @@ package runner
 import (
 	"context"
 	"fmt"
-	"github.com/mkuznets/classbox/pkg/api/client"
-	"github.com/mkuznets/classbox/pkg/docker"
-	"github.com/mkuznets/classbox/pkg/fileutils"
-	"github.com/mkuznets/classbox/pkg/opts"
-	"github.com/mkuznets/classbox/pkg/utils"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/mkuznets/classbox/pkg/api/client"
+	"github.com/mkuznets/classbox/pkg/docker"
+	"github.com/mkuznets/classbox/pkg/fileutils"
+	"github.com/mkuznets/classbox/pkg/opts"
+	"github.com/mkuznets/classbox/pkg/utils"
+	"github.com/pkg/errors"
 )
 
 type Runner struct {

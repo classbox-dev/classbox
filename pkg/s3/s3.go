@@ -2,12 +2,13 @@ package s3
 
 import (
 	"context"
+	"io"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"io"
-	"time"
 )
 
 type S3 struct {

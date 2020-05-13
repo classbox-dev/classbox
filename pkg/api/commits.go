@@ -2,6 +2,8 @@ package api
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/jackc/pgx/v4"
@@ -9,7 +11,6 @@ import (
 	"github.com/mkuznets/classbox/pkg/api/models"
 	"github.com/mkuznets/classbox/pkg/db"
 	"github.com/pkg/errors"
-	"net/http"
 )
 
 func (api *API) GetCommit(w http.ResponseWriter, r *http.Request) {

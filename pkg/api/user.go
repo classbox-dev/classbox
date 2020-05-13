@@ -1,13 +1,14 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/go-chi/render"
 	"github.com/jackc/pgx/v4"
 	E "github.com/mkuznets/classbox/pkg/api/errors"
 	"github.com/mkuznets/classbox/pkg/api/models"
 	"github.com/mkuznets/classbox/pkg/db"
 	"github.com/pkg/errors"
-	"net/http"
 )
 
 func (api *API) GetUser(w http.ResponseWriter, r *http.Request) {

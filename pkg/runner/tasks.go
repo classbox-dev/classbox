@@ -2,10 +2,11 @@ package runner
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/mkuznets/classbox/pkg/api/models"
 	"github.com/mkuznets/classbox/pkg/fileutils"
 	"github.com/pkg/errors"
-	"log"
 )
 
 func (rr *Runner) finishTask(task *models.Task) {

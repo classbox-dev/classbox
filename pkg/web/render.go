@@ -2,10 +2,11 @@ package web
 
 import (
 	"bytes"
-	"github.com/pkg/errors"
 	"html/template"
 	"io"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 func (web *Web) Render(w http.ResponseWriter, tpl *template.Template, v interface{}) error {

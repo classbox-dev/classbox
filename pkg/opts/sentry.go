@@ -1,8 +1,9 @@
 package opts
 
 import (
-	"github.com/getsentry/sentry-go"
 	"log"
+
+	"github.com/getsentry/sentry-go"
 )
 
 type Sentry struct {

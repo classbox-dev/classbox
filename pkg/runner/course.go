@@ -1,10 +1,11 @@
 package runner
 
 import (
+	"log"
+
 	"github.com/mkuznets/classbox/pkg/api/models"
 	"github.com/mkuznets/classbox/pkg/fileutils"
 	"github.com/pkg/errors"
-	"log"
 )
 
 func (rr *Runner) upgradeCourse() error {

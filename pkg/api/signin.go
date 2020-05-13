@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+
 	"github.com/go-chi/render"
 	"github.com/jackc/pgx/v4"
 	E "github.com/mkuznets/classbox/pkg/api/errors"
@@ -12,8 +15,6 @@ import (
 	"github.com/mkuznets/classbox/pkg/github"
 	"github.com/mkuznets/classbox/pkg/utils"
 	"github.com/pkg/errors"
-	"log"
-	"net/http"
 )
 
 const repoName = "hsecode-stdlib"

@@ -1,9 +1,10 @@
 package errors
 
 import (
-	"github.com/getsentry/sentry-go"
 	"log"
 	"net/http"
+
+	"github.com/getsentry/sentry-go"
 
 	"github.com/go-chi/render"
 )

@@ -2,14 +2,15 @@ package web
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/rakyll/statik/fs"
 	"html/template"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+
+	"github.com/pkg/errors"
+	"github.com/rakyll/statik/fs"
 )
 
 type Templates struct {

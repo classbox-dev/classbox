@@ -2,9 +2,10 @@ package web
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/go-chi/chi"
 	"github.com/mkuznets/classbox/pkg/api/client"
-	"net/http"
 )
 
 func sessionAuth(API func(r *http.Request) *client.Client) func(next http.Handler) http.Handler {

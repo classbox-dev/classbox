@@ -1,8 +1,9 @@
 package web
 
 import (
-	"github.com/mkuznets/classbox/pkg/api/models"
 	"net/http"
+
+	"github.com/mkuznets/classbox/pkg/api/models"
 )
 
 type prerequisitesPage struct {

@@ -1,14 +1,15 @@
 package api
 
 import (
+	"log"
+	"net/http"
+	"time"
+
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/mkuznets/classbox/pkg/opts"
-	"log"
-	"net/http"
-	"time"
 )
 
 // API is a collection of endpoints

@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/mkuznets/classbox/pkg/api/models"
-	"github.com/pkg/errors"
 	"log"
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/mkuznets/classbox/pkg/api/models"
+	"github.com/pkg/errors"
 )
 
 type Client struct {

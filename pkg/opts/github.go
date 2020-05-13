@@ -5,10 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"errors"
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
-	"time"
 )
 
 // Github contains settings for Github apps

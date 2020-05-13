@@ -1,10 +1,11 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/jackc/pgx/v4"
 	"github.com/mkuznets/classbox/pkg/api/models"
 	"github.com/mkuznets/classbox/pkg/db"
-	"net/http"
 
 	"github.com/go-chi/render"
 	E "github.com/mkuznets/classbox/pkg/api/errors"

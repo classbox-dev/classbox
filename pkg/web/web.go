@@ -1,15 +1,16 @@
 package web
 
 import (
+	"log"
+	"net/http"
+	"time"
+
 	sentryhttp "github.com/getsentry/sentry-go/http"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/mkuznets/classbox/pkg/api/client"
 	"github.com/mkuznets/classbox/pkg/opts"
 	"github.com/rakyll/statik/fs"
-	"log"
-	"net/http"
-	"time"
 )
 
 type Server struct {

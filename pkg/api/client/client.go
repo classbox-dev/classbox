@@ -5,11 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/url"
+
 	"github.com/mkuznets/classbox/pkg/api/models"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
-	"net/http"
-	"net/url"
 )
 
 type Client struct {
