@@ -5,10 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"golang.org/x/oauth2"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/pkg/errors"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -49,7 +50,7 @@ func checkResponse(r *http.Response) error {
 	if err == nil && data != nil {
 		//noinspection GoUnhandledErrorResult
 		if err := json.Unmarshal(data, &e); err != nil {
-			return errors.WithStack(err)
+			return errors.WithMessage(err, "could not parse error response")
 		}
 	}
 	return e
@@ -62,7 +63,7 @@ func (c *Client) Request(ctx context.Context, method string, path string, body [
 
 	req, err := http.NewRequestWithContext(ctx, method, url, buf)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not create Request")
+		return nil, errors.WithMessage(err, "could not create Request")
 	}
 	c.token.SetAuthHeader(req)
 
@@ -74,20 +75,19 @@ func (c *Client) Request(ctx context.Context, method string, path string, body [
 
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not send Request")
+		return nil, errors.WithMessage(err, "could not send Request")
 	}
 
 	//noinspection GoUnhandledErrorResult
 	defer resp.Body.Close()
 
-	err = checkResponse(resp)
-	if err != nil {
-		return nil, err
+	if err := checkResponse(resp); err != nil {
+		return nil, errors.WithMessagef(err, "HTTP error on %s %s", method, path)
 	}
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not read the response")
+		return nil, errors.WithMessage(err, "could not read the response")
 	}
 	return data, nil
 }
@@ -181,11 +181,16 @@ func (c *Client) AuthAsInstallation(ctx context.Context, instID int) error {
 	if err != nil {
 		return err
 	}
-	accessToken := AccessToken{}
-	err = json.Unmarshal(data, &accessToken)
-	if err != nil {
+
+	var accessToken AccessToken
+
+	if err := json.Unmarshal(data, &accessToken); err != nil {
 		return errors.Wrap(err, "could not decode response")
 	}
+	if accessToken.Token == "" {
+		return errors.New("installation access token is missing in the response")
+	}
+
 	c.token = &oauth2.Token{
 		AccessToken: accessToken.Token,
 		TokenType:   "token",
