@@ -74,7 +74,7 @@ func (rr *Runner) runTask(task *models.Task) error {
 		task.Runs = append(task.Runs, a.Run)
 		stage := &models.Stage{
 			Cached: a.Cache != nil,
-			Run:    &models.RunHash{a.Run.Hash},
+			Run:    &models.RunHash{Hash: a.Run.Hash},
 		}
 		stage.FillFromRun("test", a.Run)
 		task.Stages = append(task.Stages, stage)

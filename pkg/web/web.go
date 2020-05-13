@@ -49,7 +49,6 @@ func (s *Server) Start() {
 		r.Mount(`/{:*\.(png|svg|ico|webmanifest)}`, staticServer)
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/stdlib", http.StatusMovedPermanently)
-			return
 		})
 		router.With(validateProject).Route("/{project:[0-9a-z]+}", func(r chi.Router) {
 			r.With(sessionAuth(s.Web.API)).Group(func(r chi.Router) {

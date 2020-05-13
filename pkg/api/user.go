@@ -17,7 +17,6 @@ func (api *API) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	E.SendError(w, r, nil, http.StatusUnauthorized, "user not authenticated")
-	return
 }
 
 func (api *API) GetUserStats(w http.ResponseWriter, r *http.Request) {
