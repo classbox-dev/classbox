@@ -20,7 +20,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var expirationLimit = 5 * time.Minute
+var expirationLimit = 30 * time.Minute
 
 func checkHookSignature(secret, signature string, body []byte) (bool, error) {
 	requestMac, err := hex.DecodeString(strings.TrimPrefix(signature, "sha1="))
