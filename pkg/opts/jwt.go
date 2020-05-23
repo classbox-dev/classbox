@@ -57,7 +57,7 @@ func (j *JwtClient) Token() (*oauth2.Token, error) {
 	}
 	jwtEncoder := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.StandardClaims{
 		IssuedAt:  time.Now().Unix(),
-		ExpiresAt: time.Now().Add(5 * time.Minute).Unix(),
+		ExpiresAt: time.Now().Add(15 * time.Minute).Unix(),
 	})
 	token, err := jwtEncoder.SignedString(key)
 	if err != nil {
