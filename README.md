@@ -1,3 +1,3 @@
 # classbox
 
-Classbox is an infrastructure for autograded assignments used in my [undergraduate course](https://github.com/mkuznets/hse-ling-algorithms) on data structures and algorithms.
+Classbox is an infrastructure for autograded programming assignments. Deployed at [hsecode.com](https://hsecode.com).
