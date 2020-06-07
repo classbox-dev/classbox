@@ -9,12 +9,12 @@ by the end of the academic year:
 ${
   \displaystyle
   \text{Algorithms} = \min \left(
-    \left\lfloor \frac{\text{Score}}{10} + 0.5 \right\rfloor, 10
+    \frac{\text{Score}}{10}, 10
   \right)
 }$
 
 
-The course grade is a rounded weighted sum of 10-point grades for *Programming* and *Theory of Algorithms*:
+The course grade is a rounded weighted sum of *unrounded* 10-point grades for *Programming* and *Theory of Algorithms*:
 
 ${
   \displaystyle
