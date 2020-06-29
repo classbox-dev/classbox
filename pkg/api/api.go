@@ -22,6 +22,7 @@ type API struct {
 	RandomState string
 	WebUrl      string
 	EnvType     string
+	Deadline    time.Time
 }
 
 // Server is a

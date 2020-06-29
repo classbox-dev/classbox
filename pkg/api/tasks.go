@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -25,6 +26,12 @@ func (api *API) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 	eventName := r.Header.Get("X-GitHub-Event")
 
 	if eventName != "check_suite" {
+		render.NoContent(w, r)
+		return
+	}
+
+	if time.Now().After(api.Deadline) {
+		log.Print("[INFO] Deadline passed")
 		render.NoContent(w, r)
 		return
 	}

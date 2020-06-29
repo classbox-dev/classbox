@@ -35,6 +35,7 @@ services:
       - WEB_URL
       - JWT_PUBLIC_KEY
       - SENTRY_DSN
+      - DEADLINE
     depends_on:
       - db
     command: ["/srv/app", "api"]
