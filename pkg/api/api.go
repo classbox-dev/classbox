@@ -54,6 +54,7 @@ func (s *Server) Start() {
 
 		// web endpoints
 		r.Get("/stats", s.API.GetStats)
+		r.Get("/solutions", s.API.GetSolutions)
 		r.Route("/auth", func(r chi.Router) {
 			r.Get("/app", s.API.AppURL)
 			r.Get("/oauth", s.API.OAuthURL)
