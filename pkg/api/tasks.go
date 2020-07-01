@@ -23,9 +23,7 @@ import (
 )
 
 func (api *API) EnqueueTask(w http.ResponseWriter, r *http.Request) {
-	eventName := r.Header.Get("X-GitHub-Event")
-
-	if eventName != "check_suite" {
+	if r.Header.Get("X-GitHub-Event") != "check_suite" {
 		render.NoContent(w, r)
 		return
 	}
@@ -34,6 +32,11 @@ func (api *API) EnqueueTask(w http.ResponseWriter, r *http.Request) {
 		log.Print("[INFO] Deadline passed")
 		render.NoContent(w, r)
 		return
+	}
+
+	deliveryID := r.Header.Get("X-GitHub-Delivery")
+	if deliveryID != "" {
+		log.Printf("[INFO] Webhook %s", deliveryID)
 	}
 
 	cs := github.CheckSuiteEvent{}

@@ -75,7 +75,9 @@ func (s *Server) Start() {
 		})
 
 		// webhook endpoint
-		r.With(hookValidator(s.API.App.HookSecret)).Post("/tasks/enqueue", s.API.EnqueueTask)
+		r.With(hookValidator(s.API.App.HookSecret)).
+			With(middleware.Logger).
+			Post("/tasks/enqueue", s.API.EnqueueTask)
 
 		// private runner's endpoints
 		r.With(jwtValidator(s.API.Jwt.Key)).Group(func(r chi.Router) {
